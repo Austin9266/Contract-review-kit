@@ -5,11 +5,9 @@
 > tracked changes and comments, with an 8-point pre-delivery integrity check.
 > MIT licensed. Ships with **no** client data, firm identity, or industry-specific content.
 
-一套把「合同审查」从判断到交付跑完的东西：AI 读完合同产出的是**文字**，
-把文字落成 Word 上真正的修订与批注，交给确定性代码。
+合同审查，从判断到交付：AI 读完合同产出的是文字，
+文字如何变成 Word 上的修订与批注，交给代码！不靠大模型，就没有幻觉，不会把文件乱改一通！
 
-默认交付物只有一个：**来件本身，带上本次的修订痕迹与批注**——不是一份"审查报告 Word"，
-也不是一堆聊天记录里的意见。
 
 ```
 来件

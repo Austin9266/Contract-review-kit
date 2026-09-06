@@ -1,0 +1,29 @@
+# 运行产物 —— 这些永远不该进仓库
+__pycache__/
+*.py[cod]
+.DS_Store
+*.bak
+.*.bak*
+
+# 落盘台跑起来会生成
+落盘台/日志/
+落盘台/工作区/
+
+# 你自己的配置与词表：署名、作息、机构名与同事名是私人信息，不要提交
+# （仓库里带的 配置.json 是占位版本，改成自己的之后别 commit 回来）
+配置.local.json
+*.local.txt
+*.local.json
+.contract-review/
+
+# 真实来件与交付件，绝对不能进仓库
+*.docx
+*.doc
+!skills/**/assets/template-*.docx
+来件*
+*（修订稿）*
+
+# 编辑器
+.vscode/
+.idea/
+*.swp

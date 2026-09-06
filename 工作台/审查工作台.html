@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>审查工作台</title>
+<script src="rules.js" onerror="window.__RULES_MOUNT_FAILED=1"></script>
+<style>
+:root{
+  --paper:#F4F4F2; --surface:#FFFFFF; --surface2:#FAFAF9; --sunk:#EFEFEC;
+  --ink:#191B1A; --ink2:#3E4443; --muted:#616867; --faint:#8C9391;
+  --line:#E0E0DC; --line2:#ECECE8;
+  --accent:#1F4E5F; --accent-soft:#E5EDF0; --accent-ink:#153A47;
+  --mark:#8A5A24; --mark-soft:#F5EDE2;
+  --on-accent:#FFFFFF;
+  --shadow:0 1px 2px rgba(25,27,26,.04),0 10px 28px -22px rgba(25,27,26,.4);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1213; --surface:#161A1B; --surface2:#1A1F20; --sunk:#121617;
+    --ink:#E7E9E9; --ink2:#C1C7C7; --muted:#939B9A; --faint:#6B7473;
+    --line:#272D2E; --line2:#202526;
+    --accent:#63AEC4; --accent-soft:#142C36; --accent-ink:#96CFE0;
+    --mark:#C99247; --mark-soft:#2A2115;
+    --on-accent:#0A1113;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -22px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1213; --surface:#161A1B; --surface2:#1A1F20; --sunk:#121617;
+  --ink:#E7E9E9; --ink2:#C1C7C7; --muted:#939B9A; --faint:#6B7473;
+  --line:#272D2E; --line2:#202526;
+  --accent:#63AEC4; --accent-soft:#142C36; --accent-ink:#96CFE0;
+  --mark:#C99247; --mark-soft:#2A2115;
+  --on-accent:#0A1113;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -22px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",system-ui,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Songti SC","SimSun","宋体",Georgia,serif;font-weight:700;margin:0;text-wrap:balance}
+button{font:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.wrap{max-width:1320px;margin:0 auto;padding:0 24px}
+
+.mast{display:flex;align-items:baseline;gap:16px;padding:26px 0 18px;flex-wrap:wrap}
+.mast h1{font-size:24px;letter-spacing:-.01em}
+.mast .sub{color:var(--faint);font-size:12.5px}
+.mast .spacer{flex:1}
+.modeswitch{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--surface)}
+.modeswitch button{border:0;background:none;padding:6px 16px;font-size:13.5px;color:var(--muted)}
+.modeswitch button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:700}
+
+.bench{display:grid;grid-template-columns:minmax(290px,330px) 1fr;gap:22px;align-items:start;padding-bottom:40px}
+@media(max-width:960px){.bench{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:9px;box-shadow:var(--shadow);overflow:hidden}
+.rail{position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto}
+@media(max-width:960px){.rail{position:static;max-height:none}}
+.sec{padding:15px 18px;border-bottom:1px solid var(--line2)}
+.sec:last-child{border-bottom:0}
+.sec > .lbl{font-size:11px;letter-spacing:.09em;color:var(--faint);font-weight:700;display:block;margin-bottom:9px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--line);background:var(--surface2);color:var(--ink2);padding:3px 11px;border-radius:999px;font-size:12.5px;line-height:1.65;transition:background .12s,border-color .12s,color .12s}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.txt{width:100%;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:6px;padding:7px 10px;font:inherit;font-size:13px}
+.txt::placeholder{color:var(--faint)}
+select.txt{cursor:pointer}
+textarea.txt{line-height:1.65;resize:vertical}
+.hint{font-size:11.5px;color:var(--faint);margin:6px 0 0;line-height:1.6}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ck{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);margin-bottom:6px}
+.ck:last-child{margin-bottom:0}
+.ck input{width:15px;height:15px;accent-color:var(--accent)}
+
+.tabs{display:flex;padding:0 20px;border-bottom:1px solid var(--line2);background:var(--surface2);gap:24px;flex-wrap:wrap}
+.tab{border:0;background:none;color:var(--muted);padding:13px 0 11px;font-size:13.5px;border-bottom:2px solid transparent;position:relative;top:1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:700}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;flex-wrap:wrap;border-bottom:1px solid var(--line2)}
+.bar .note{font-size:12.5px;color:var(--muted)}
+.bar .rt{display:flex;align-items:center;gap:11px}
+.count{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);padding:5px 15px;border-radius:6px;font-size:13px}
+.btn.quiet{background:var(--surface);color:var(--accent);border-color:var(--line)}
+.btn.quiet:hover{border-color:var(--accent)}
+.btn.tiny{padding:2px 10px;font-size:12px;border-radius:5px}
+pre.out{margin:0;padding:18px 20px;white-space:pre-wrap;word-break:break-word;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.85;color:var(--ink2);
+  max-height:calc(100vh - 190px);min-height:340px;overflow:auto}
+.linkish{background:none;border:0;color:var(--accent);padding:0;font-size:12.5px;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+
+/* 规则抽屉 */
+.scrim{position:fixed;inset:0;background:rgba(25,27,26,.32);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(580px,100vw);background:var(--surface);border-left:1px solid var(--line);z-index:50;transform:translateX(100%);transition:transform .24s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.dw-hd{padding:15px 20px 0;border-bottom:1px solid var(--line2)}
+.dw-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.dw-top h2{font-size:16px}
+.x{border:0;background:none;font-size:21px;line-height:1;color:var(--muted);padding:2px 6px;border-radius:5px}
+.x:hover{color:var(--ink);background:var(--sunk)}
+.seg{display:flex;gap:20px;margin-top:10px}
+.seg button{border:0;background:none;color:var(--muted);font-size:13px;padding:5px 0 8px;border-bottom:2px solid transparent}
+.seg button[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--accent)}
+.srcline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 20px;border-bottom:1px solid var(--line2);background:var(--surface2);font-size:12px;color:var(--muted)}
+.badge{display:inline-block;font-size:10.5px;padding:0 7px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--muted);margin-right:6px}
+.badge.ext{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.mount{padding:14px 20px 16px;border-bottom:1px solid var(--line2);background:var(--sunk);display:grid;gap:11px}
+.mount h3{font-family:inherit;font-size:12.5px;font-weight:700;margin:0 0 3px}
+.mount p{margin:0;font-size:12px;color:var(--muted);line-height:1.65}
+.row2{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.hr{height:1px;background:var(--line);margin:1px 0}
+.libitem{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 10px;margin-bottom:5px;font-size:12px;color:var(--ink2)}
+.libitem.on{border-color:var(--accent);background:var(--accent-soft)}
+.libname{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;flex:1;word-break:break-all}
+.libmeta{color:var(--faint);font-size:11px;flex:none}
+.changebar{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;padding:9px 20px;background:var(--mark-soft);border-bottom:1px solid var(--line2);font-size:12px;color:var(--mark)}
+.sb-acts{display:flex;gap:7px;flex-wrap:wrap}
+.dw-tools{padding:11px 20px;border-bottom:1px solid var(--line2)}
+.dw-body{flex:1;overflow:auto;padding:2px 20px 36px}
+.sect{font-size:11px;color:var(--faint);letter-spacing:.08em;margin:20px 0 5px;padding-bottom:5px;border-bottom:1px solid var(--line2)}
+.sect:first-child{margin-top:10px}
+.pgrp{border-bottom:1px solid var(--line2)}
+.phd{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:10px 2px;text-align:left;font-size:13px;color:var(--ink)}
+.phd:hover{color:var(--accent)}
+.caret{color:var(--faint);font-size:9px;width:10px;flex:none;transition:transform .16s}
+.phd[aria-expanded="true"] .caret{transform:rotate(90deg)}
+.pname{flex:1;font-weight:500}
+.pn{font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.pbody{padding:0 0 6px 18px}
+.grp{font-size:11.5px;color:var(--faint);margin:18px 0 6px}
+.grp:first-child{margin-top:10px}
+.card{border-bottom:1px solid var(--line2);padding:13px 0 14px}
+.card:last-child{border-bottom:0}
+.card.off{opacity:.45}
+.card.off .c-t{text-decoration:line-through}
+.c-hd{display:flex;gap:9px;align-items:baseline}
+.cid{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--accent);flex:none;padding-top:1px}
+.c-t{font-size:14px;font-weight:700;line-height:1.5;flex:1}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--mark);flex:none;align-self:center}
+.more{border:0;background:none;color:var(--faint);font-size:14px;line-height:1;padding:2px 7px;border-radius:5px;flex:none}
+.more:hover{color:var(--ink);background:var(--sunk)}
+.row{font-size:12.5px;line-height:1.72;color:var(--ink2);margin-top:6px}
+.row .k{color:var(--faint);font-size:11.5px;margin-right:6px}
+.exc{margin-top:8px;border-left:2px solid var(--mark);padding-left:11px;font-size:12.5px;line-height:1.72;color:var(--ink2)}
+.exc .k{display:block;color:var(--mark);font-size:11px;margin-bottom:1px}
+.c-meta{margin-top:8px;font-size:11px;color:var(--faint)}
+.edit{margin-top:11px;background:var(--sunk);border-radius:7px;padding:13px 14px;display:grid;gap:10px}
+.edit label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px}
+.edit .goes{font-size:11px;color:var(--faint);margin:-2px 0 0;line-height:1.6}
+.edit .goes b{color:var(--mark);font-weight:500}
+.edit .acts{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.sw{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2)}
+.sw input{width:15px;height:15px;accent-color:var(--accent)}
+.empty{padding:40px 0;text-align:center;color:var(--faint);font-size:13px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);background:var(--ink);color:var(--paper);padding:9px 20px;border-radius:7px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:60;max-width:76vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <h1>审查工作台</h1>
+    <span class="sub" id="submeta"></span>
+    <span class="spacer"></span>
+    <div class="modeswitch" id="mode">
+      <button data-mode="k" aria-pressed="true">合同</button>
+      <button data-mode="w" aria-pressed="false">非合同文书</button>
+    </div>
+  </header>
+
+  <div class="bench">
+    <div class="panel rail">
+      <div class="sec">
+        <span class="lbl">类型</span>
+        <select class="txt" id="f-type"></select>
+      </div>
+
+      <div class="sec">
+        <span class="lbl">我方是</span>
+        <div class="chips" id="f-role"></div>
+      </div>
+
+      <div class="sec" id="sec-track">
+        <span class="lbl">文本来源</span>
+        <div class="chips" id="f-track"></div>
+        <p class="hint" id="trackhint"></p>
+      </div>
+
+      <div class="sec" id="sec-situ">
+        <span class="lbl">还涉及</span>
+        <div class="chips" id="f-situ"></div>
+        <p class="hint">拿不准就装上——每条规则都带「例外」写明何时不适用；漏装一个包，那一整包的硬伤全漏（如多甲方漏了「不承担连带清偿责任」）。</p>
+      </div>
+
+      <div class="sec">
+        <span class="lbl">我方是谁（写进指令开头的身份句）</span>
+        <input class="txt" id="f-org" placeholder="如：一家制造业集团／某医疗器械公司／我方">
+        <p class="hint">留空按「我方」。这一句决定模型代入谁的立场，写得越具体越贴。</p>
+      </div>
+
+      <div class="sec">
+        <span class="lbl">背景（写多少算多少，其余让模型判读）</span>
+        <textarea class="txt" id="f-note" rows="4" placeholder="我方为发包人，一侧 3 家项目公司；本件是施工补充协议，原合同 2025-03 签；变更后总价已核定；已履行招标。"></textarea>
+      </div>
+
+      <div class="sec">
+        <span class="lbl">环境</span>
+        <label class="ck"><input type="checkbox" id="mcp-law" checked> 已接法律法规检索 MCP</label>
+        <label class="ck"><input type="checkbox" id="mcp-tyc" checked> 已接企业信息查询 MCP</label>
+        <p class="hint" id="mcphint"></p>
+      </div>
+
+      <div class="sec">
+        <span class="lbl">落盘口径</span>
+        <div class="chips" id="f-who" style="margin-bottom:8px"></div>
+        <input class="txt" id="f-sign" value="审查人" style="margin-bottom:7px">
+        <div class="two">
+          <input class="txt" id="f-t1" placeholder="起 如 09:00">
+          <input class="txt" id="f-t2" placeholder="止 如 17:00">
+        </div>
+        <p class="hint">留空则按收件时刻起算，落在 配置.json 的「工作时段」内，不落周末。北京时间字面值。</p>
+      </div>
+
+      <div class="sec">
+        <span class="lbl">来件</span>
+        <input class="txt" id="f-file" placeholder="文件名，例：XX补充协议.doc">
+        <p class="hint">用于落盘指令里锁定交付后缀。</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-step="review">审查</button>
+        <button class="tab" role="tab" aria-selected="false" data-step="redline">落盘</button>
+      </div>
+      <div class="bar">
+        <span class="note" id="onote"></span>
+        <span class="rt">
+          <span class="count" id="cnt"></span>
+          <button class="linkish" id="openlib">规则</button>
+          <button class="btn" id="copy">复制</button>
+        </span>
+      </div>
+      <pre class="out" id="out"></pre>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="规则">
+  <div class="dw-hd">
+    <div class="dw-top"><h2>规则</h2><button class="x" id="dwclose" aria-label="关闭">×</button></div>
+    <div class="seg" role="tablist">
+      <button role="tab" aria-selected="true" data-scope="on">这次用到</button>
+      <button role="tab" aria-selected="false" data-scope="all">全部</button>
+    </div>
+  </div>
+  <div class="srcline">
+    <span id="srctext"></span>
+    <button class="linkish" id="togglemount">管理</button>
+  </div>
+  <div class="mount" id="mountpanel" style="display:none">
+    <div class="liblist" id="liblist" style="display:none"></div>
+    <div><h3>规则库文件</h3><p id="writehow"></p></div>
+    <div class="row2" id="writeacts"></div>
+    <div class="hr"></div>
+    <div class="row2">
+      <input type="file" id="pickfile" accept=".js,.json" style="display:none">
+      <button class="btn tiny quiet" id="pickbtn">临时读一份…</button>
+      <input class="txt" id="vname" placeholder="版本名" style="max-width:110px">
+      <input class="txt" id="vnote" placeholder="改了什么" style="flex:1;min-width:120px">
+      <button class="btn tiny quiet" id="exportbtn">另存</button>
+    </div>
+  </div>
+  <div class="changebar" id="statebar" style="display:none">
+    <span id="statetext"></span><span class="sb-acts" id="stateacts"></span>
+  </div>
+  <p class="hint" style="padding:0 22px 8px;margin:0">这套规则卡与 contract-review-sop 技能同源：在这里改完，跑一次技能里的 scripts/抽取工作台.py 就同步过去；AI 自己审时用 assemble.py 按同样的包装配。</p>
+  <div class="dw-tools"><input class="txt" id="q" type="search" placeholder="搜规则、批注措辞"></div>
+  <div class="dw-body" id="dwbody"></div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════ 规则库：外挂优先，否则内置 ═══════════ */
+const BUILTIN = {"schema":1,"version":"v2.0","updated":"通用版","note":"通用版规则库：按「通用核 ＋ 情形包 ＋ 类型包」组织。示例条款均为虚构的同形写法，不含任何真实主体、项目、金额或来件内容。要加自己行业的判断口径，直接往 cards 里加卡，见 CLAUDE.md。","packs":[{"k":"CORE","label":"通用核","desc":"无条件适用。确定性校验为主，几乎不会误报。"},{"k":"S1","label":"情形｜我方多主体","desc":"我方一侧有两个及以上签约主体时装配。"},{"k":"S2","label":"情形｜框架＋项目合同两层","desc":"集采框架协议下再签具体项目合同时装配。"},{"k":"S3","label":"情形｜补充／变更／终止协议","desc":"本件是对既有合同的修改或了结时装配。"},{"k":"S4","label":"情形｜涉政府或村集体","desc":"相对方为政府、管委会、村集体或村民时装配。"},{"k":"S5","label":"情形｜涉招投标","desc":"项目已招标或达到法定必招标准时装配。"},{"k":"S6","label":"情形｜对方模板／非制式","desc":"文本由对方提供或双方自拟时装配。"},{"k":"S7","label":"情形｜涉外币","desc":"存在外币计价、外币出资或外币付款时装配。"},{"k":"S8","label":"情形｜涉不动产／在建工程","desc":"标的涉不动产、在建建筑或土地时装配。"},{"k":"T1","label":"类型｜工程施工与总承包","desc":"工程施工、总承包、集采框架合同。"},{"k":"T2","label":"类型｜设备采购与技术协议","desc":"设备、货物采购合同与配套技术协议。"},{"k":"T3","label":"类型｜技术与专业服务","desc":"咨询、设计、监理、检测、驻场等服务合同。"},{"k":"T4","label":"类型｜租赁（房屋·场地·土地·设备）","desc":"房屋、厂房、场地、土地、设备的租赁与使用。"},{"k":"T5","label":"类型｜投资·战略合作·框架协议","desc":"投资协议、战略合作、开发框架、意向书。"},{"k":"T6","label":"类型｜金融借款（固贷·流贷·股东借款）","desc":"银行借款、股东借款等融资文本。"},{"k":"T7","label":"类型｜公司治理（章程·决议）","desc":"公司章程、股东会与董事会决议。"},{"k":"T8","label":"类型｜函件与承诺函","desc":"承诺函、告知函、催告函、律师函、复函。"},{"k":"T9","label":"类型｜安全生产协议","desc":"安全生产协议与施工现场安全条款。"},{"k":"T10","label":"类型｜结算·变更·内部报审","desc":"结算、工程/服务变更、内部报审表。"}],"cards":[{"id":"G1","t":"空格、勾选与占位符未闭合","when":"所有文本，尤其我方制式模板与银行/公用事业单位格式文本","sig":"下划线空白、【】、○、□、'选填'、'以下两项任选其一'、'【注：可多选】'","ask":"未填：「请注意填写。」｜未勾：「未勾选。」｜勾了两处：「勾选了两处，请确认以哪个为准？」｜二选一全保留：「此处为二选一条款，请选定其一并将未选项删除或划'/'。」｜定义条款空置：「提请注意确认后补充对应内容。」","act":"批注为主；未选项划'/'与删除模板指导语属【修订】","fail":"谈判中的商稿刻意留白待商务确定的，只提示一次即可，不必逐处重复批注；框架协议中留待项目合同填写的空格不算缺漏。","pack":"CORE","failReal":"谈判中的商稿刻意留白待商务确定的，只提示一次即可，不必逐处重复批注；框架协议中留待项目合同填写的空格不算缺漏。"},{"id":"G2","t":"金额四项验算","when":"任何有价款的文本","sig":"大小写金额、含税/不含税、税率、分期比例、单价×数量","ask":"「请确认金额。」「请补充大写金额。」「请确认税率。」；与上位文件不符时引具体数字：「上位文件载明的暂定总价与本处不一致，提请确认。」","act":"能算出唯一正确值的【修订】；需经办人确认的【批注】","fail":"暂估价、以结算为准的价款，不要求当下写死；但若变更后总价已明确，则各节点金额应写死（见 S3）。","pack":"CORE","failReal":"暂估价、以结算为准的价款，不要求当下写死；但若变更后总价已明确，则各节点金额应写死（见 S3）。"},{"id":"G3","t":"计量单位与计价口径","when":"任何按量计价的文本（面积、数量、重量、功率、工时、台套）","sig":"同一标的两处用不同单位；元/㎡ 与 元/m；台/套/项 混用；毛量与净量、含税与不含税混排；以两种口径（如设计值与验收值）描述同一个量","ask":"「同一标的在第 X 条与第 Y 条使用了不同计量单位，建议统一。」「请确认计价基准取哪一个口径，并核对全文是否一致。」「此处单位符号有误（㎡ 写成 m），建议修正。」","act":"口径冲突【修订】统一；单位混用【批注】；符号错误（㎡写成m）【修订】","fail":"同一标的本就存在两个合法口径（如设计量与结算量、毛面积与套内面积）的，不是错误——要问的是计价基准取哪一个、全文是否一致，而不是要求两个数字相等。","pack":"CORE","failReal":"同一标的本就存在两个合法口径（如设计量与结算量、毛面积与套内面积）的，不是错误——要问的是计价基准取哪一个、全文是否一致，而不是要求两个数字相等。"},{"id":"G4","t":"内部交叉引用与编号","when":"条款超过 20 条或由模板拼接而来的文本","sig":"'见第X条'、'按X.X条'、'详见附件X'、条款跳号重号","ask":"「提请注意不存在第 X.X 款，请确认是否是针对第 Y.Y 款的情形。」「此处引用的条款与本条语境不符，请核实。」","act":"指向错误且唯一正确值可判定的【修订】；否则【批注】","fail":"无。此项几乎不会误报——但必须真的点开核对，不得凭编号相近推断。","pack":"CORE","failReal":"无。此项几乎不会误报——但必须真的点开核对，不得凭编号相近推断。"},{"id":"G5","t":"附件三对照","when":"含附件清单的任何文本","sig":"正文引用的附件序号与名称 / '合同组成文件'清单 / 实际所附附件","ask":"「没有这个附件，附件 X 是另一份文件。」「本合同尚未添加该附件，若涉及请添加对应附件。」「根据合同内容，附件还应包括另外两份文件，若涉及请添加，若不涉及请调整正文内容。」「目前本协议相关附件均未添加，提请注意补充完整。」","act":"错位引用【修订】；缺附件【批注】","fail":"框架协议下附件在具体项目合同中约定的，不构成缺漏；对方作为谈判筹码暂未提供的技术附件，提示即可。","pack":"CORE","failReal":"框架协议下附件在具体项目合同中约定的，不构成缺漏；对方作为谈判筹码暂未提供的技术附件，提示即可。"},{"id":"G6","t":"份数与主体数匹配","when":"任何文本，多方合同必查","sig":"'一式X份'、'各执X份'、'报送备案X份'","ask":"「甲方有 N 家，请核实份数是否与主体数对应。」「份数是否写反了？请确认。」","act":"算术上不成立的【修订】；分配方式待定的【批注】","fail":"无。","pack":"CORE","failReal":""},{"id":"G7","t":"主体名称逐字一致并与登记信息比对","when":"任何文本","sig":"抬头、正文、签署页、收款账户、开票信息中的主体名称；关联公司名称相近；分公司名称","ask":"「公开信息查到的规范名称与本处写法不一致，请确认（须与公章保持一致）。」「请确认签约主体是否为该公司的分公司。」「提请注意确认正确发包人主体名称。」","act":"与登记信息不符的【批注】请核实（不代改，公章可能另有写法）；文内前后不一致的【修订】统一","fail":"集团内部惯用简称在鉴于条款中出现，且已给出'以下简称'的，不必修改。","pack":"CORE","failReal":"集团内部惯用简称在鉴于条款中出现，且已给出'以下简称'的，不必修改。"},{"id":"G8","t":"日期与期限推演","when":"任何含期限、节点、付款周期的文本","sig":"'自签订之日起'、'每X年一付'、'到期年度X月X日前'、计划开工/竣工日期、租期年限与届满日","ask":"「建议核实确认什么时候到期。」「按现在签署的时点推算，租期届满年份与此处所写不一致，提请确认。」「此处日期有误，请根据实际情况调整。」","act":"算术矛盾【修订】；商业安排不合理【批注】并给替代方案","fail":"谈判阶段尚未确定开工日的，'暂定'即可，不必强求确定日期。","pack":"CORE","failReal":"谈判阶段尚未确定开工日的，'暂定'即可，不必强求确定日期。"},{"id":"G9","t":"引用法规的真伪与时效","when":"任何援引法规的文本","sig":"'根据《…》'、'依照…条例'、条文号","ask":"「没有这个法。」「该规定所依据《中华人民共和国公司登记管理条例（2016 修订）》已经失效，依据《中华人民共和国市场主体登记管理条例》第三十二条规定……」","act":"【修订】","fail":"无。但无法规检索工具时不得凭记忆断言，改列待核清单。","pack":"CORE","failReal":"无。但无法规检索工具时不得凭记忆断言，改列待核清单。"},{"id":"G10","t":"全文称谓与合同性质一致","when":"由其他合同改写、或由招标文件转正式合同的文本","sig":"'甲方/乙方'与'发包人/承包人'混用；'买卖合同'字样出现在施工服务合同；'投标人''入围候选人''招标方'留在正式协议","ask":"「正式合同中不会再出现招标方/投标方的表述，提请注意。」「正式签署的协议不应使用'入围候选人'的概念，需要调整为'承包人'。」","act":"【修订】","fail":"招标文件本身（尚未转为合同）保留招标阶段称谓是正确的。","pack":"CORE","failReal":"招标文件本身（尚未转为合同）保留招标阶段称谓是正确的。"},{"id":"G11","t":"相对方资信","when":"相对方为外部企业","sig":"首次合作、民营主体、大额预付、对方承担长期义务","ask":"「系失信被执行人，资信情况较差，提请关注。」终本案件须写明条数与案号并提示附截图存档。","act":"【批注】+ 摘要","fail":"公用事业单位、政府机关、银行等无需资信核查；集团兄弟单位简化。","pack":"CORE","failReal":"公用事业单位、政府机关、银行等无需资信核查；集团兄弟单位简化。"},{"id":"G12","t":"生效条件与残留表述","when":"任何文本","sig":"'自双方签字盖章之日起生效'、'如有附生效条件承诺或约定的'、'买方发出合同生效函后生效'","ask":"「本协议未设定生效条件，建议删除。」「提请注意生效条件是否为'买方发出合同生效函后本合同正式生效'。」","act":"残留条件句【修订】删除；条件模糊【批注】","fail":"当客户的商业目的本就是让协议不轻易生效时，条件写得模糊是有意为之，此时改为提示、不要修订。","pack":"CORE","failReal":"当客户的商业目的本就是让协议不轻易生效时，条件写得模糊是有意为之，此时改为提示、不要修订。"},{"id":"G13","t":"发票与财务收据的口径","when":"任何付款条款","sig":"'增值税专用发票'、'财务收据'、'支付申请书'、'付款申请书'","ask":"「请确认两个是否都要提供。」「建议跟财务部门核实是否可开具此类收据。」「若提交的文件格式与支付申请书相同，建议统一提交材料的名称。」「届时是否应当按照结算金额开票。」","act":"【批注】","fail":"对方为小规模纳税人时可由税务局代开，不必要求其自开专票。","pack":"CORE","failReal":"对方为小规模纳税人时可由税务局代开，不必要求其自开专票。"},{"id":"G14","t":"模板残留的无对应机制条款","when":"由模板套改的文本","sig":"'索扣履约保证金'但全文未设保证金；'进度款'但无进度款安排；'工程量计算规则'章节不存在；'合伙企业执行事务合伙人'但双方均为公司","ask":"「提请注意本合同未约定履约保证金，所不涉及请删去。」「仅在涉及合伙企业签署时适用，如不涉及建议删除。」","act":"【修订】删除或【批注】建议删除","fail":"无。","pack":"CORE","failReal":""},{"id":"G15","t":"管辖与争议解决","when":"任何文本","sig":"'项目所在地法院'、'甲方所在地法院'、'甲方所在地仲裁委员会'、诉裁并存、正文与附件不一致","ask":"「需要明确具体的仲裁机构，否则存在无效风险。请确认是否接受届时提交某地仲裁委仲裁。」「甲方包括多家单位，需要明确具体是哪个甲方的所在地法院。」「提请注意，合同正文约定的是向甲方所在地人民法院提起诉讼。」","act":"机构名称错误、诉裁并存、文内冲突【修订】；管辖地选择【批注】","fail":"建设工程施工合同、不动产纠纷可能被认定专属管辖——此时如实提示、维持现表述，不硬改。原话：「不排除法院按照专属管辖认定的可能性……但从有利于我方的角度分析，可以维持当前表述。」","pack":"CORE","failReal":"建设工程施工合同、不动产纠纷可能被认定专属管辖——此时如实提示、维持现表述，不硬改。原话：「不排除法院按照专属管辖认定的可能性……但从有利于我方的角度分析，可以维持当前表述。」"},{"id":"S1-1","pack":"S1","t":"分别结算、分别开票、不承担连带责任","when":"我方一侧两个及以上签约主体","sig":"多个甲方并列；'甲方1、甲方2'；附件按项目公司分列费用","ask":"缺失时【补充】：'乙方应当就各项目分别向所对应的甲方公司（信息见附件×）提交结算资料并开具发票，由对应甲方公司分别支付其自身项目所涉合同款项，且各甲方公司均不就其他甲方公司的付款义务承担连带清偿责任。'","act":"【补充】","fail":"我方多主体但由集团统一结算、内部另有分摊安排的，不适用；先向经办人确认结算路径。","failReal":"我方多主体但由集团统一结算、内部另有分摊安排的，不适用；先向经办人确认结算路径。"},{"id":"S1-2","pack":"S1","t":"签署栏按主体分设","when":"我方一侧两个及以上主体","sig":"签署页只有一个'法定代表人（负责人）'栏","ask":"「每一家的法定代表人应当都不同，此处排版是否需要进行调整？」","act":"【批注】","fail":"全部授权同一位代表并有授权文件的，可合并。","failReal":"全部授权同一位代表并有授权文件的，可合并。"},{"id":"S1-3","pack":"S1","t":"管辖必须落到具体主体","when":"我方多主体且所在地不同","sig":"'向甲方所在地人民法院提起诉讼'","ask":"「本协议存在两个甲方且所在地不同，建议约定由××公司所在地管辖。」","act":"【修订】","fail":"多主体同址的不必改。","failReal":"多主体同址的不必改。"},{"id":"S1-4","pack":"S1","t":"价格口径统一为单价而非'费用一致'","when":"多主体按各自数量／面积／工作量分摊","sig":"'各方费用一致'、各项目单价不同","ask":"约定统一单价（费用标准），总价按各自量计算；单位需与量对应。","act":"【修订】或【补充】","fail":"各主体工作内容确实不同（如含与不含某项专项服务）时，应分别定价而非强求统一。","failReal":"各主体工作内容确实不同（如含与不含某项专项服务）时，应分别定价而非强求统一。"},{"id":"S1-5","pack":"S1","t":"设备与资产归属到具体主体","when":"多主体共同采购设备或共建资产","sig":"供货清单未标注归属；'共采购 N 台，其中 N 台用于共用部分'","ask":"「鉴于各甲方分别支付，建议明确此处设备在甲方内部的归属情况。」「归属于哪个甲方？针对什么设备？建议明确。」","act":"【批注】","fail":"无。","failReal":""},{"id":"S1-6","pack":"S1","t":"份数与各项目信息落附件","when":"我方多主体","sig":"'一式X份'；正文写单一项目地址","ask":"份数按主体核算；各项目对应主体、地址、规模、金额列入附件并在正文引用。","act":"【批注】/【补充】","fail":"无。","failReal":""},{"id":"S2-1","pack":"S2","t":"框架与项目合同的解释效力顺序","when":"集采框架协议下再签具体项目合同","sig":"'本协议内容视为具体项目合同的组成部分'、两套附件并存","ask":"「提请注意项目合同与框架合同的解释效力。」缺失的补充优先顺序条款。","act":"【补充】","fail":"单一合同无两层结构的不适用。","failReal":"单一合同无两层结构的不适用。"},{"id":"S2-2","pack":"S2","t":"框架终止条件的数量口径","when":"框架协议约定达到预估总量即终止","sig":"'签订数量达到本协议第 X 条预估总量时，本框架协议提前终止'","ask":"「单份合同没有到 A 但整体到了 B 的，是否也需要提前终止？单份已超 A 但整体没到 B 的呢？目前表述可能产生歧义，建议明确。」","act":"【批注】","fail":"无。","failReal":""},{"id":"S2-3","pack":"S2","t":"合作期限届满不影响已签项目合同","when":"框架协议有明确合作期限","sig":"'合作期限从签订日起至X年X月X日'","ask":"补充：'承包人在合作期限届满前与发包人签订具体项目合同的，不论其项下工作是否能在合作期限届满前完成，均应按具体项目合同要求执行。合作期限届满并不影响此前签订的具体项目合同的履行。'","act":"【补充】","fail":"无。","failReal":""},{"id":"S2-4","pack":"S2","t":"框架附件与项目合同附件的编号区分","when":"两层结构且各有附件","sig":"'附件1'在两层中同时出现","ask":"「可以将项目合同附件命名为附件一，以区分于框架协议。」","act":"【批注】（低优先级）","fail":"附件已有具体名称、整体足以区分的，可不改。原话即含此保留。","failReal":"附件已有具体名称、整体足以区分的，可不改。原话即含此保留。"},{"id":"S2-5","pack":"S2","t":"正式协议中的招标阶段称谓","when":"框架/项目合同由招标文件转来","sig":"'入围候选人''投标人''招标方''投标总价'","ask":"「正式合同中不会再出现招标方/投标方的表述，提请注意。」「正式签署的协议不应使用'入围候选人'的概念，需要调整为'承包人'。」","act":"【修订】","fail":"招标文件本体不改。","failReal":"招标文件本体不改。"},{"id":"S3-1","pack":"S3","t":"改哪一条必须精确定位并引原文","when":"补充协议、变更协议","sig":"'删除取消……有关合同阶梯价的约定'这类概括表述","ask":"「引号内的条款是否就是'合同阶梯价的约定'？如果是的，建议删除'有关合同阶梯价'的表述，明确删除哪些内容即可；如果另有所指，需要约定清楚具体涉及调整的条款内容。」","act":"【批注】+建议文本","fail":"无。","failReal":""},{"id":"S3-2","pack":"S3","t":"金额能算出来的就写死","when":"变更后总价已确定","sig":"'按变更后总金额及原付款节点、比例重新核算'、'差额在下一笔款项中抵扣或支付'","ask":"「为避免争议，如果现在金额可以算出来的（变更后的总价既已明确，各节点金额是否也可以一并算出？），建议明确约定各节点应付具体金额。」","act":"【批注】","fail":"确需后续结算才能确定的，保留原则性约定即可，只需写明核算规则与差额处理时点。","failReal":"确需后续结算才能确定的，保留原则性约定即可，只需写明核算规则与差额处理时点。"},{"id":"S3-3","pack":"S3","t":"连带调整项清单","when":"任何变更协议","sig":"数量/型号/规模/总价变更","ask":"「提请注意，数量及型号调整后是否涉及技术要求等内容的变更，如涉及的应当在本协议中一并明确。」「提请确认，除预付款外是否设置其他支付时间节点，若涉及请确认是否也随调整后金额按比例执行。」「变更后的规模是否已建完，若否，建议明确工期。」","act":"【批注】","fail":"无。这是变更协议漏项最集中的地方。","failReal":"无。这是变更协议漏项最集中的地方。"},{"id":"S3-4","pack":"S3","t":"原合同其他签署方未参与本协议","when":"原合同为三方及以上，补充协议签署方少于原合同方","sig":"补充协议修改了涉及未签署方的条款（合同期限、费用分担）","ask":"「本条系针对合同期限的约定，需要取得原合同全部签署方同意才能生效。其他出资方未参与签署本协议，本条约定对其不具备约束力，提请注意。」","act":"【批注】","fail":"仅涉及本协议双方之间权利义务的条款不受影响。","failReal":"仅涉及本协议双方之间权利义务的条款不受影响。"},{"id":"S3-5","pack":"S3","t":"归并条款","when":"任何补充协议","sig":"缺'与原合同不一致以本协议为准/未约定的以原合同为准/本协议为原合同组成部分'","ask":"补充完整三句式；并核实本协议究竟是哪一份合同的补充（「请确认本协议是哪一份主合同的补充协议。」）","act":"【补充】","fail":"无。","failReal":""},{"id":"S3-6","pack":"S3","t":"终止协议：终止原因不得写成我方过错","when":"终止/解除协议","sig":"'由于受到审批手续未办理齐全等因素影响，原合同无法继续履行'","ask":"「手续未办理齐全、无法完成原合同约定工作等表述更偏向于是我方原因导致合同无法继续履行，建议尽量避免。」","act":"【批注】","fail":"确因我方原因且已达成商业共识的，措辞可保留但应同时明确互不追责。","failReal":"确因我方原因且已达成商业共识的，措辞可保留但应同时明确互不追责。"},{"id":"S3-7","pack":"S3","t":"终止协议：'无未结清款项、无任何争议'的兜底核对","when":"终止/解除协议","sig":"'双方确认原合同项下不存在未结清的款项，双方就原合同不存在任何争议或纠纷'","ask":"「按照当前约定，可理解为我方默认放弃追回已缴纳的【】万元保证金，建议确认是否符合双方协商确认的处理方案（如希望追回的，应予明确履约保证金返还的具体安排）。」","act":"【批注】","fail":"确已结清且我方无待收款项的，该条对我方有利，不必改。","failReal":"确已结清且我方无待收款项的，该条对我方有利，不必改。"},{"id":"S3-8","pack":"S3","t":"代付/垫付安排","when":"出现丙方代付、关联公司先行垫付","sig":"出现丙方代付、关联公司先行垫付；'待项目公司具备付款条件后转移权利义务'","ask":"「建议届时签署三方协议，明确约定本项目垫付款项的退回事项、结算款支付事项及原合同甲方权利义务由项目公司承接，并建议将三方协议签署作为项目公司支付款项的先决条件。」「请确认逾期支付等产生的违约责任是否由乙方自行承担？」","act":"【批注】+建议文本","fail":"无。","failReal":""},{"id":"S4-1","pack":"S4","t":"政府方是否实际出资","when":"政府或管委会作为协议方","sig":"'与××镇人民政府等其他 N 家出资方签署'——政府列为签约方但未见其出资义务","ask":"「××镇政府是否实际出资？提请确认。如果不出资的，建议修改为'与××镇人民政府以及其他 N 家出资方'。」","act":"【批注】","fail":"无。","failReal":""},{"id":"S4-2","pack":"S4","t":"我方对政府的资金支持承诺应与项目进度挂钩","when":"投资/开发框架协议中我方承诺产业基金、乡村振兴等资金支持","sig":"'承诺以产业基金投资或乡村振兴形式支持××政府 X 亿元，于 X 年 X 月前完成'","ask":"「关于资金支持事宜，提请贵方注意按照公司制度要求履行相应的决策程序。考虑到金额较大，目前仅单方设置对我方付款的时间要求，建议酌情考虑与项目建设、审批进度等事项挂钩。否则，一旦补充协议签署，即使后续项目推进遇到阻碍，贵方也仍需在约定期限内支付款项。」","act":"【批注】","fail":"政府侧已先行履行（指标已下达、土地已摘牌）的，挂钩意义有限。","failReal":"政府侧已先行履行（指标已下达、土地已摘牌）的，挂钩意义有限。"},{"id":"S4-3","pack":"S4","t":"以承诺达成作为主合同生效条件的连锁后果","when":"补充协议约定'承诺条件成就时主合同生效'","sig":"多项承诺 + '条件成就时主合同生效'","ask":"「本补充协议涉及多项承诺，请确认是否需要全部达成主合同才生效？如第三、四条均作为生效前提条件的，将导致主合同长时间处于已成立未生效状态，提请关注。」","act":"【批注】","fail":"无。","failReal":""},{"id":"S4-4","pack":"S4","t":"需报政府备案的协议，措辞取舍交经办人","when":"协议需提交政府备案","sig":"约定'以届时正式协议为准''双方不实际履行'等","ask":"「建议明确具体以届时签署的正式协议为准。但考虑到本协议需提交政府备案，请斟酌考虑这样明确约定是否妥当。」","act":"【批注】（提问式，不代决定）","fail":"这正是'表述应当明确'的例外：写明确对法律有利、对备案不利，须由经办人权衡，不要替他决定。","failReal":"这正是'表述应当明确'的例外：写明确对法律有利、对备案不利，须由经办人权衡，不要替他决定。"},{"id":"S4-5","pack":"S4","t":"农村集体土地流转的程序要件","when":"承租村集体土地","sig":"出租方为村委会、村股份经济合作社、村民小组","ask":"要求提供：未发包到户土地的村民会议三分之二以上成员或代表同意决议 + 乡（镇）人民政府批准；已发包到户土地的全体承包户书面同意。甲方本身系乡镇政府的可视为已获批准。","act":"【批注】+待补材料清单","fail":"国有土地、集体经营性建设用地入市另有程序，不适用本条。","failReal":"国有土地、集体经营性建设用地入市另有程序，不适用本条。"},{"id":"S4-6","pack":"S4","t":"流转期限不得超过剩余家庭承包期","when":"农村土地租赁","sig":"'租赁期限 X 年，自签订之日起至 20XX 年止（最长不得超过土地承包期剩余期限）'","ask":"「建议核实确认什么时候到期。」「按现在签署的时点推算，租期届满年份与此处所写不一致，提请确认。」","act":"【批注】","fail":"无。","failReal":""},{"id":"S4-7","pack":"S4","t":"税费负担条款的实际缴纳路径","when":"土地／房屋租赁约定'税费由甲方承担'","sig":"耕地占用税、城镇土地使用税、房产税、房屋租赁相关税费","ask":"推演法定纳税主体（多为土地/房屋使用方），'甲方承担'实为我方先缴后追偿；「提请确认是否同意额外承担税费。」","act":"【批注】","fail":"无。","failReal":""},{"id":"S4-8","pack":"S4","t":"征收补偿分配与地上附着物","when":"土地租赁","sig":"'租赁期间土地被依法征收的，乙方应服从'","ask":"土地补偿费归权利人，地上附着物（我方投建的建构筑物及设备）补偿归我方，甲方应配合申报领取；「原则上剩余部分应当全额退还。」","act":"【修订】或【补充】","fail":"无。","failReal":""},{"id":"S5-1","pack":"S5","t":"框架/战略协议中直接指定承包商或供应商","when":"投资、战略合作、三方框架协议","sig":"'优先选用××为总承包单位''优先采购××指定第三方的设备''签署专门用于本项目的采购协议'","ask":"「依法需要履行招投标程序，提请注意。」「金额如已达到法定招标标准的，该项采购届时也需履行法定招投标程序，不宜直接约定在本协议签署后即签署采购协议。」","act":"【批注】（一般不硬改，因系商业安排）","fail":"未达法定必招标准且集团制度亦不要求的，可保留'同等条件下优先'表述。","failReal":"未达法定必招标准且集团制度亦不要求的，可保留'同等条件下优先'表述。"},{"id":"S5-2","pack":"S5","t":"采购主体是否正确","when":"框架协议约定第三方采购设备","sig":"总承包单位与业主之外的第三方直接签采购协议","ask":"「应由甲方项目公司采购（甲供），或由甲方中标的总承包单位采购（包含在承包范围内）。」「原先约定的采购方主体也不对。」","act":"【批注】/【修订】","fail":"无。","failReal":""},{"id":"S5-3","pack":"S5","t":"合同实质性内容与中标通知书一致","when":"已完成招标的项目","sig":"标的、价款、质量、履行期限与投标文件/中标通知书不符","ask":"不一致的【修订】；并核实招标文件、投标文件是否已纳入合同文件组成。","act":"【修订】","fail":"经合法变更程序调整的除外。","failReal":"经合法变更程序调整的除外。"},{"id":"S5-4","pack":"S5","t":"招投标主体与签约主体一致","when":"已招标项目","sig":"以关联公司名义代签","ask":"不一致必须批注核实交易结构。","act":"【批注】","fail":"无。","failReal":""},{"id":"S6-1","pack":"S6","t":"拟制确认与视为条款","when":"对方提供的文本","sig":"'X日未确认视为验收合格''一方未到现场则视为其认可验收结果''逾期未回复视为同意'","ask":"「提请关注。」并推演：使付款条件或质量确认脱离我方控制。","act":"【批注】；系对方新增的建议删除","fail":"对我方有利方向的拟制条款（如对方逾期不回复视为同意我方延期）可保留。","failReal":"对我方有利方向的拟制条款（如对方逾期不回复视为同意我方延期）可保留。"},{"id":"S6-2","pack":"S6","t":"格式条款三性审查","when":"对方模板","sig":"免除对方责任、加重我方责任、排除我方主要权利；互免间接/惩罚性损失；单方解释权","ask":"提示可主张无效，按我方利益修订。","act":"【修订】","fail":"双向对等的责任限制条款（互免间接损失且我方为主要付款方）未必不利，需结合角色判断。","failReal":"双向对等的责任限制条款（互免间接损失且我方为主要付款方）未必不利，需结合角色判断。"},{"id":"S6-3","pack":"S6","t":"违约责任对等性","when":"对方模板或对方新增条款","sig":"对方新增了对我方的差额补足/兜底/高额违约金","ask":"「鉴于对方新增的差额补足条款，建议酌情考虑对等添加。」「违约责任较高，提请关注。」","act":"【批注】","fail":"我方为强势甲方且商业上已接受不对等的，提示即可。","failReal":"我方为强势甲方且商业上已接受不对等的，提示即可。"},{"id":"S6-4","pack":"S6","t":"赔偿范围与违约金并列的基础","when":"约定'赔偿实际损失'又列举违约金、滞纳金、罚款","sig":"'赔偿范围包括但不限于资金占用成本、违约金、滞纳金、罚款及维权费用'","ask":"「这些费用都是以存在明确约定为前提的，本合同的原则是赔偿实际损失，不存在额外的违约金、罚款等惩罚措施，建议删除。」","act":"【修订】","fail":"合同确已另行约定违约金的，保留。","failReal":"合同确已另行约定违约金的，保留。"},{"id":"S6-5","pack":"S6","t":"兜底计算基准缺失","when":"约定按'实际融资成本''资金占用成本'计算","sig":"'按照【甲方实际融资成本】计'","ask":"「甲方资金成本应当是比较低的，建议明确标准。」","act":"【批注】","fail":"无。","failReal":""},{"id":"S7-1","pack":"S7","t":"折算四要素","when":"外币计价、外币出资或外币付款","sig":"'等值美元''以美元支付'","ask":"建议文本须含：①折算基准（人民币兑××汇率中间价，注明发布机构如中国外汇交易中心）；②基准时点（实际到账/支付当日）；③兜底（非工作日或未公布的适用此前最近一个工作日中间价）；④差额处理（不足的补足/设人民币下限，并写明汇率变动不影响权益比例）。估算金额标注'暂估金额'。","act":"【修订】或【补充】+完整文本","fail":"金额极小或已锁汇的，可简化。","failReal":"金额极小或已锁汇的，可简化。"},{"id":"S8-1","pack":"S8","t":"未取得建设工程规划许可证的房屋租赁无效","when":"厂房屋顶租赁、房屋租赁，标的含在建建筑","sig":"'建筑物'清单中含在建厂房；'拟建''在建'","ask":"「对于涉及仍在建的厂房，请注意确认是否已取得建设工程规划许可证；租赁未取得建设工程规划许可证房屋的，租赁合同无效（起码针对在建厂房租赁部分的约定无效）。」","act":"【批注】","fail":"无。标的含在建建筑时这是高危点。","failReal":"无。标的含在建建筑时这是高危点。"},{"id":"S8-2","pack":"S8","t":"签署前核实抵押、查封与第三方权利","when":"任何不动产租赁或使用","sig":"'甲方保证享有完全、无瑕疵的所有权或使用权'","ask":"「协议签署前建议要求对方提供最新的产调文件以核实是否涉及抵押、查封。」","act":"【批注】","fail":"无。","failReal":""},{"id":"S8-3","pack":"S8","t":"分批交付与起租日","when":"标的分期建成或分批交付","sig":"'计租面积暂定''免租期'","ask":"「因部分厂房在建，提请注意确认各处标的交付的日期是否能做到一致，交付日期可能还涉及到租金的支付问题。」；起租点改为'实际交付之日起'。","act":"【批注】/【修订】","fail":"无。","failReal":""},{"id":"S8-4","pack":"S8","t":"转租须取得业主书面同意","when":"出租方可能为二房东","sig":"'出租房东方'并列、出租方与产权人不一致","ask":"「出租方和房东方是否为一方？如果出租方系二房东的，需取得实际业主出具的关于同意转租的书面同意。」","act":"【批注】","fail":"无。","failReal":""},{"id":"S8-5","pack":"S8","t":"专属管辖如实提示","when":"建设工程施工合同、不动产纠纷","sig":"约定'甲方所在地法院'","ask":"「不排除法院按照专属管辖认定的可能性，即需要在工程所在地人民法院提起诉讼；但也存在法院认可当前约定管辖的可能性。从有利于我方的角度分析，可以维持当前表述。」","act":"【批注】，不硬改","fail":"标的不涉不动产、也不属建设工程施工合同的，仍按争取一个固定管辖地处理。","failReal":"标的不涉不动产、也不属建设工程施工合同的，仍按争取一个固定管辖地处理。"},{"id":"T1-1","pack":"T1","t":"承包范围的'兜底句'与费用归属","when":"工程施工、总承包合同、集采框架","sig":"'本文件中未明确列出、但为实现工程功能与安全运行所必需的工作，均由承包人负责'；'如有'；'（施工期间如涉及）'","ask":"兜底句对我方有利，重点核对是否被对方删改；「提请注意该表述存在问题，建议明确具体主体。」（由谁负责、由谁承担费用）","act":"【批注】；被删改的比对集团模板","fail":"对方模板中的兜底句方向相反（要求发包人兜底）的，须删除。","failReal":"对方模板中的兜底句方向相反（要求发包人兜底）的，须删除。"},{"id":"T1-3","pack":"T1","t":"'支付'与'支付至'的歧义","when":"总承包合同的分节点付款条款","sig":"'发包人向承包人支付合同费用的 X%，付款至合同费用的 Y%'——同一段里'支付'与'付款至'混用","ask":"「此处约定不明，是付款至 X% 还是 Y%？请注意核实调整。」「这两个是否应当为'支付至'？提请确认。」","act":"【批注】","fail":"无。工程类合同最高频的歧义之一。","failReal":"无。工程类合同最高频的歧义之一。"},{"id":"T1-4","pack":"T1","t":"费用科目命名混乱","when":"总承包合同付款条款","sig":"'设备费''材料费''设备/材料费（含主要设备）''（不含主要设备）'交错出现","ask":"「建议统一所使用的词汇，比如统一用设备/材料费，以括号区分包含与不包含两部分，交错使用材料费、设备费、设备/材料费容易导致理解上的歧义。」","act":"【批注】","fail":"合同中已定义清晰、约定明确的，无需修改（原批注即含此保留）。","failReal":"合同中已定义清晰、约定明确的，无需修改（原批注即含此保留）。"},{"id":"T1-5","pack":"T1","t":"进度款与预付款扣回的对象","when":"总承包合同含预付款","sig":"'每月支付工程进度款时按月完工金额的 X% 扣回预付款'——扣回基数指向不明","ask":"「此处工程进度款是否指'建安、服务、材料费用（不含甲供主要设备费及安措费）'？建议明确。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T1-6","pack":"T1","t":"工期节点与分期规模","when":"分期建设的总承包合同","sig":"'分两期建设''X 年 X 月，一期全部投入使用'——分期规模与工期节点对不上","ask":"「建议明确一期和二期的规模划分标准。」「对应规模是多少？建议明确。」「未特别约定的，'X 月'均应理解为在当月月底之前完成。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T1-7","pack":"T1","t":"缺陷责任保证金与质保金双轨","when":"总承包合同","sig":"'缺陷责任期 X 年，保证金为建安部分的 Y%'；'设备质保金 Y%，质保期满 N 年后支付'——两套留置并行","ask":"核对两笔保证金的比例、期限、释放条件是否与付款节点百分比自洽；释放条件是否附加了'提交质量承诺书'等新增义务。","act":"【批注】","fail":"补充协议中对方以质量保函替代保证金的，属减轻对方义务 →「涉及减轻对方义务，提请关注。」","failReal":"补充协议中对方以质量保函替代保证金的，属减轻对方义务 →「涉及减轻对方义务，提请关注。」"},{"id":"T1-8","pack":"T1","t":"农民工工资监管账户","when":"施工类合同","sig":"'每月 X 日前将上月工资足额转入监管账户，监管总金额为合同总金额的 Y%'","ask":"「请确认表述是否准确，为避免歧义，建议填写实际签署的合同名称。金额如可确定的建议填写实际金额（无法确定的可按'暂定XX万元'填写）。」「如未能全额汇入的，是否可以延期支付验收款？考虑到此处为新增条款，可酌情考虑添加有关违约措施。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T1-9","pack":"T1","t":"集采名单与技术协议的强制力","when":"合同约定设备从集团集采名单内选取","sig":"'建议从集团集采名单内选取'","ask":"「提请注意：1. 此处为建议，非强制要求；2. 集采名单建议作为协议附件。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T1-10","pack":"T1","t":"第三方检验结果的效力","when":"总承包、采购合同","sig":"'发包人委托第三方检查检验的，第三方的验收结果视为发包人的验收结果'","ask":"「提请确认。」（对我方一般有利，但需确认第三方由我方选任且费用承担明确）","act":"【提示-无需批注】或轻批注","fail":"第三方由对方指定的，方向相反，须修订。","failReal":"第三方由对方指定的，方向相反，须修订。"},{"id":"T1-12","pack":"T1","t":"分包事项与代付义务的期限","when":"总承包合同","sig":"'承包人可以进行分包的事项：______'；'负责代付场地租赁费及相关手续费、购买建设期工程保险'——代付义务无期限","ask":"「为重要条款，注意根据具体情况予以约定。」「代付的期限建议明确。」「请注意明确期限。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T2-1","pack":"T2","t":"'卖方为制造商/代理商时适用'两套条款并存","when":"集团采购合同模板","sig":"'（卖方为制造商时适用）''（卖方为代理商时适用）'两套条款并存，未划去不适用的一套","ask":"「请根据卖方实际情况确认适用哪一种情形；不适用部分的条款需删除。」「如果卖方就是制造商的，此处删除。」","act":"【批注】","fail":"无。采购类最高频。","failReal":"无。采购类最高频。"},{"id":"T2-2","pack":"T2","t":"赠送设备的数量与质保","when":"采购合同含赠送条款","sig":"'每订购 N 台随批次发货赠送一台'——赠送比例与上表实际赠送数对不上","ask":"「按照此处标准，上表赠送部分的数量与约定的赠送比例对不上，请确认。」「建议一并明确赠送设备的质保责任（按什么标准、由谁承担）。」","act":"【批注】+验算","fail":"无。","failReal":""},{"id":"T2-3","pack":"T2","t":"质保期与'发现不符期限'的协调","when":"采购合同","sig":"'买方在通过验收后 N 年内发现不符的，仍有权要求承担质保期内责任'——与质保期不衔接","ask":"「提请注意，本合同项下产品质保期已约定为 X 年，请确认是否相应调整时间安排。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T2-4","pack":"T2","t":"履约保函与预付款的先后","when":"采购合同含保函","sig":"'合同生效后 N 日内，卖方应在买方支付预付款前提交履约保函'——两个条件互为前置","ask":"核对保函比例、格式附件编号是否正确；「提请注意履约保函的格式为附件 6。」；未提交保函的救济是否明确。","act":"【修订】编号；【批注】其余","fail":"无。","failReal":""},{"id":"T2-5","pack":"T2","t":"技术协议与主合同的指代","when":"技术协议单独签署","sig":"'应符合技术规格书以及合同明确的各项要求'——未写明是哪一份技术协议","ask":"「技术规格书是否即为本协议？此处的'合同'是否指采购合同？为避免理解歧义，建议明确。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T2-6","pack":"T2","t":"验收组织与签署主体","when":"采购/技术协议","sig":"'现场验收由买卖双方及第三方共同组织，如其中一方未到现场，则视为其认可验收结果'","ask":"「提请关注。」「是否为买卖双方签署？建议明确。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T2-7","pack":"T2","t":"备品备件清单与价款归属","when":"采购/技术协议","sig":"'价款应包括在合同总价中（商务部分填写）'——备品备件清单与价款归属留白","ask":"「请确认是否需要填写。」「请确认。」（是否已含在总价、是否需另附清单）","act":"【批注】","fail":"无。","failReal":""},{"id":"T2-8","pack":"T2","t":"设备数量与台数的具体化","when":"采购、监造","sig":"'N 台 A 型设备、N 台 B 型主设备、N 套 C 型成套装置'——型号写了、台套数没写全","ask":"「是否需要注明台数？」","act":"【批注】","fail":"无。","failReal":""},{"id":"T2-9","pack":"T2","t":"指导/安装/调试的断句歧义","when":"采购合同售后条款","sig":"'指派人员到现场进行指导安装和调试工作'——'指导安装'还是'指导、安装'断句不明","ask":"「提请注意确认是指导安装工作与调试工作，还是指导工作、安装工作、调试工作，若为后一种情况建议表述为'指导、安装、调整工作'。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T2-10","pack":"T2","t":"不可撤销保函/收据的可行性","when":"采购、监造","sig":"'金额为合同总价 X% 的财务收据（有税务部门监制章）'——实操中难以取得","ask":"「建议跟财务部门核实是否可开具此类收据。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T3-1","pack":"T3","t":"以取得批复／成果文件为完工凭证","when":"报告编制、方案设计、评估评审类服务（需报主管部门审查或备案的）","sig":"'评审通过''经主管部门审核'但未要求取得批复或书面成果文件","ask":"「如涉及取得批复、评审意见等文件的，建议要求取得相关文件作为工作完成的凭证。」","act":"【批注】/【补充】","fail":"部分事项仅需专家评审、行政上并无批复文件的，不得强求。","failReal":"部分事项仅需专家评审、行政上并无批复文件的，不得强求。"},{"id":"T3-3","pack":"T3","t":"各阶段工期缺失","when":"任何服务类合同","sig":"有违约金条款'每延期一日支付总费用 X%'但正文未约定阶段工期","ask":"「目前协议未约定具体的各阶段工期要求，建议补充。」「关于工作进度要求，目前缺少明确的约定，提请注意。」「删除后本协议目前对于取得批复文件的期限未作要求，提请注意。」","act":"【批注】/【补充】","fail":"无。服务类最高频缺漏。","failReal":"无。服务类最高频缺漏。"},{"id":"T3-4","pack":"T3","t":"服务期限与主合同期限衔接","when":"监理、监造、工程管理类","sig":"'自签订生效之日起至标的验收合格之日'——服务期与主合同期限不衔接","ask":"「建议与主合同期限保持一致，即至'标的验收合格后 X 个月止'。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T3-5","pack":"T3","t":"人员配置数量留空","when":"监理、监造、驻场服务","sig":"'派驻工程师 N 名，其中专业工程师【】名'——人员配置留空","ask":"「请注明人数。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T3-6","pack":"T3","t":"计价与结算方式自相矛盾","when":"监理、驻场类按人月计价","sig":"'X 元/月/人，每月支付一次'与'总价包死'并存——计价与结算口径自相矛盾","ask":"「计价方式与结算方式矛盾，请确认费用结算方式。若确定不是据实结算而是总价包死，建议删去按人月计价的报酬计算标准。」「若仅约定按季度支付，注意与服务周期对应。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T3-8","pack":"T3","t":"甲方原因导致超期的额外报酬","when":"监理、驻场服务","sig":"'由于甲方原因导致超过约定服务期【】个月以上的，甲方应支付额外报酬'——阈值留空或填 0","ask":"「即只要甲方原因导致超期的，均需要支付额外收益，提请注意。」","act":"【批注】","fail":"无。填 0 等于取消缓冲，属典型填空陷阱。","failReal":"无。填 0 等于取消缓冲，属典型填空陷阱。"},{"id":"T3-9","pack":"T3","t":"项目基本信息张冠李戴","when":"服务类合同（多由模板复制）","sig":"标的项目名称、地点与合同名称不符","ask":"「本次技术尽调的标的项目名称与其载明的项目所在地不一致，请确认项目信息。」「提请注意根据技术规范书中的项目情况介绍，项目工程地点在××镇境内，请注意核实具体信息。」","act":"【批注】","fail":"无。模板复制类合同必查。","failReal":"无。模板复制类合同必查。"},{"id":"T3-10","pack":"T3","t":"验收资料与验收款节点","when":"服务类合同","sig":"仅约定进度款与结算款，无验收款","ask":"「是否设置验收款？（乙方配合完成项目档案验收工作并经甲方验收通过后支付）」「提请确认，案件结算是否仅需提交案件分析总结，是否需要提供验收报告。」","act":"【批注】","fail":"小额服务合同可不设。","failReal":"小额服务合同可不设。"},{"id":"T4-1","pack":"T4","t":"起租日不得自签订日起算","when":"土地、房屋、场地、设备租赁","sig":"'自签订之日起租'而标的尚未交付","ask":"改为'实际交付之日起'；免租期安排与'先付后用'的关系。","act":"【修订】","fail":"标的已实际占用的除外。","failReal":"标的已实际占用的除外。"},{"id":"T4-2","pack":"T4","t":"租金支付节奏与频次自洽","when":"多年期租赁","sig":"'其余租金于上期租期结束前【】个工作日内支付'——支付节奏与租期频次对不上","ask":"「请确认是否一年支付一次。」「具体支付时间、支付节奏（分几次还是一次性支付？）不明，建议明确。」提前一年以上付款的推演见 G8。","act":"【批注】","fail":"无。","failReal":""},{"id":"T4-3","pack":"T4","t":"续租与不定期租赁","when":"租赁合同","sig":"'未明确表示不续租且继续使用的，视为继续承租'；'租赁期限为不定期，双方均有权随时解除'","ask":"「如果要续租的，建议到期后签署正式书面协议，不要采取本条约定的方式，对于续租期限等容易发生争议。」「提请确认是否同意续租时租赁期限为不定期，请结合续租租金支付约定审慎考虑。」","act":"【批注】","fail":"我方为出租方时方向相反。","failReal":"我方为出租方时方向相反。"},{"id":"T4-4","pack":"T4","t":"押金/定金的性质与差额","when":"租赁合同","sig":"'预付 X 元作为定金，自合同生效之日起定金转为首月租金'——定金与押金性质混同","ask":"「存在歧义，差价部分还需要补吗？如果不需要补的话，建议明确。」；'订金'非法律概念的按 v6 §5.3 处理。","act":"【批注】","fail":"无。","failReal":""},{"id":"T4-5","pack":"T4","t":"装修、附属设施的归属与费用承担","when":"房屋/厂房租赁","sig":"'费用由甲方/乙方承担'未划选；'（ ）乙方恢复原状/（ ）归甲方所有'未勾","ask":"「请明确由哪一方承担。」「请明确。」「请明确承担方式。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T4-6","pack":"T4","t":"出租方提前收回的违约金口径","when":"租赁合同","sig":"'退还已收取的租金余额及押金并按年租金 X% 支付违约金'——口径是否覆盖我方实际损失","ask":"「存在歧义，本协议租金按年支付，此外为退还全额租金，还是退还剩余租赁期限内对应的租金，请明确。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T4-7","pack":"T4","t":"承租方中途解除的高额补偿","when":"长期土地租赁","sig":"'乙方中途单方解除的，需一次性支付剩余年限全部租金'","ask":"「建议明确因为项目审批等原因导致无法继续推进的，也属于不可抗力情形。」（为我方保留退出口）","act":"【批注】/【修订】","fail":"无。","failReal":""},{"id":"T4-8","pack":"T4","t":"见证方/第三方的角色","when":"三方租赁或清障协议","sig":"丙方仅为见证方却出现在违约责任条款中","ask":"「根据贵方介绍本协议中丙方只是作为见证方，此处建议可以删去丙方。」「如果没有见证人的，此处请删除。」","act":"【修订】","fail":"丙方确有实质义务的除外。","failReal":"丙方确有实质义务的除外。"},{"id":"T4-9","pack":"T4","t":"物业费、水电等费用条款","when":"房屋/商铺租赁","sig":"'按租赁合同签订时间提后一个月缴纳'；费用分担未勾选","ask":"「是否为'往后一个月缴纳'？」「请明确承担方式。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T4-10","pack":"T4","t":"简易租赁合同的签署栏","when":"小额租赁","sig":"落款无法定代表人或授权代表信息","ask":"「落款处未载明法定代表人或授权代表信息，简易合同简易盖章生效即可。」（可接受，说明即可）","act":"【提示-无需批注】","fail":"标的金额大、租期长或后续可能就续租发生争议的，签署栏仍应载明法定代表人或授权代表，不得援引本条从简。","failReal":"标的金额大、租期长或后续可能就续租发生争议的，签署栏仍应载明法定代表人或授权代表，不得援引本条从简。"},{"id":"T4-11","pack":"T4","t":"以事件为终止点却没有兜底日期","when":"租期以某一事件（交付、验收、投产、取得批复）发生之日为终止点","sig":"'至××之日止'而未同时写'或自起租日起满【】个月，二者孰早'","ask":"「请确认是否需要增加一个确定的终止日？否则该事件一直不发生，租赁义务就一直不结束。」","act":"【批注】/【补充】","fail":"双方有意让租期跟着事件走、且该事件确定会发生的，可以保留；但仍建议写一个最长期限。","failReal":"双方有意让租期跟着事件走、且该事件确定会发生的，可以保留；但仍建议写一个最长期限。"},{"id":"T4-12","pack":"T4","t":"'视为持续使用'的拟制条款","when":"租赁合同以拟制方式认定使用状态","sig":"'首次使用即视为已开始实际使用，除非取得书面确认文件，否则视为持续使用'","ask":"「本条以拟制方式认定使用状态，举证责任实际落在我方，提请关注。」","act":"【批注】","fail":"我方为出租方时方向相反，该条对我方有利。","failReal":"我方为出租方时方向相反，该条对我方有利。"},{"id":"T5-1","pack":"T5","t":"产业项目建设义务的归属","when":"'以投资换资源'类开发协议","sig":"'甲方根据乙方主业项目的建设进度……协助乙方关联方办理另一类项目的项目用地资源'","ask":"「建议明确该产业项目为乙方A的项目，避免被认定为我方也需要承担产业项目的建设义务。」","act":"【批注】/【修订】","fail":"无。","failReal":""},{"id":"T5-2","pack":"T5","t":"连带责任的范围限缩","when":"多方合作协议约定对项目公司义务承担连带责任","sig":"'乙方同意对项目公司各项法定义务包括但不限于费用给付等承担连带责任'","ask":"「考虑到乙方也包括产业合作方，如果不做明确区分，此处可以理解为对于合作方的项目公司承担的费用支付义务等也需要由我方承担连带责任，建议删除（子公司应当独立承担责任）；如必须添加的，也应当作出区分（乙方A和乙方B分别只对各自设立的项目公司承担责任）。」","act":"【修订】","fail":"无。","failReal":""},{"id":"T5-3","pack":"T5","t":"对我方设立主体形式的限制","when":"投资协议约定由'全资或控股子公司'承接","sig":"'由乙方在当地成立的唯一具备有效授权的全资或控股子公司承担'","ask":"「针对我方可以不设定太多限制，只要是乙方B设立的子公司即可（如存在设立分公司可能性的，则建议添加分公司的表述）。」","act":"【批注】/【修订】","fail":"无。","failReal":""},{"id":"T5-4","pack":"T5","t":"锁定条款与我方退出口（预协议）","when":"意向协议、预租赁协议、框架协议","sig":"'后续签署正式协议'","ask":"补锁定条款（正式协议签订前对方不得与第三方洽谈签约或设定权利负担，违反的赔偿全部前期投入）；补我方退出口（政府审批未通过、我方未通过投资决策可无责解除）。","act":"【补充】","fail":"对方为政府时锁定条款通常难以争取，改为提示。","failReal":"对方为政府时锁定条款通常难以争取，改为提示。"},{"id":"T5-5","pack":"T5","t":"生效条件难以证明达成","when":"附条件生效的合作协议","sig":"'取得备案证明文件，且该文件持续有效至竣工'——生效条件无法在签约时判定","ask":"「除非一直等到项目竣工，否则无法证明这项条件是否达成；如贵方本意即为不让本协议轻易达到生效条件，从这个角度考虑也可以这样约定。但如果双方发生争议的，法院仍可能认定此处条件约定不清，应当在取得备案证明后即视为本项条件达成。建议双方可另行签署补充协议明确双方不实际履行本协议。」","act":"【批注】（机制跑不通型）","fail":"客户希望协议尽快生效、或对方可能借条件不成就拖延的，仍应把生效条件写到可判定。本条只适用于客户有意让协议不轻易生效的情形。","failReal":"客户希望协议尽快生效、或对方可能借条件不成就拖延的，仍应把生效条件写到可判定。本条只适用于客户有意让协议不轻易生效的情形。"},{"id":"T5-6","pack":"T5","t":"我方主体性质表述的准确性","when":"鉴于条款、公司介绍段","sig":"'是一家……的全资子公司'／'××集团的全资企业'——出资层级与实际股权结构对不上","ask":"「此处对我方主体性质的表述与实际股权结构不一致，建议按工商登记的出资关系表述。」","act":"【修订】","fail":"无。","failReal":""},{"id":"T5-8","pack":"T5","t":"国有土地招拍挂中的主体错配","when":"政府与我方约定由第三方参与摘牌","sig":"'由丙方作为投标主体参与挂牌出让，若中标则保证金转为出让金，再由乙方与甲方签订商务合同并支付剩余出让金'——摘牌主体与用地主体错配","ask":"「如果丙方参与招拍挂的，应当土地就出让给丙方，请确认。」「需要签署正式的土地出让合同并支付出让金，请核实此处操作的可行性。」「一般没有这样的地类，请注意核实准确的土地名称。」","act":"【批注】（机制跑不通型）","fail":"无。","failReal":""},{"id":"T6-1","pack":"T6","t":"银行格式文本的填空","when":"固贷、流贷、股东借款","sig":"'借款期限【】个月，即从 X 年 X 月 X 日起'——银行格式文本的空格未填","ask":"「请补充具体的基点数。」「请注意补充日期。」「请注意补充相关信息。」","act":"【批注】","fail":"银行格式文本一般不接受实质修改；审查重心在填空、勾选、我方义务清单与触发条件，而非改写条款。","failReal":"银行格式文本一般不接受实质修改；审查重心在填空、勾选、我方义务清单与触发条件，而非改写条款。"},{"id":"T6-2","pack":"T6","t":"选项式条款的填写方式","when":"银行模板","sig":"'以（2）【以下两项任选其一：（1）月（2）季度】为周期'——选项式条款未删去未选项","ask":"「此处应当直接填写序号对应的内容？（以此处为例，应填写'季度'，下同）」","act":"【批注】","fail":"无。","failReal":""},{"id":"T6-3","pack":"T6","t":"管辖在银行所在地","when":"贷款合同","sig":"'向乙方住所地人民法院起诉'","ask":"「提请关注，在银行所在地法院起诉。」（一般无法改变，留痕即可）","act":"【批注】","fail":"非银行格式文本的借款（股东借款、关联方拆借）仍应争取我方所在地管辖，不适用本条。","failReal":"非银行格式文本的借款（股东借款、关联方拆借）仍应争取我方所在地管辖，不适用本条。"},{"id":"T6-4","pack":"T6","t":"我方持续性承诺义务清单","when":"贷款合同","sig":"'保持实际控制人不变化''财务指标承诺''对外担保限制'","ask":"「如后续本项目拟转让的，需事先通知并取得贷款行同意。」逐条列出我方需持续遵守的义务并提示业务部门。","act":"【批注】","fail":"无。","failReal":""},{"id":"T6-5","pack":"T6","t":"提款/签证条件留空","when":"贷款合同","sig":"签证单条件栏空白","ask":"「请确认是否对签证单不设置任何条件。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T6-6","pack":"T6","t":"送达地址变更的期限","when":"贷款合同、任何含送达条款的文本","sig":"'如需变更送达地址，应通过书面、邮件、短信或公告等任意一种方式通知'——未约定生效期限","ask":"「此处是否同样需明确期限。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T7-1","pack":"T7","t":"法定代表人产生与变更办法必须载明","when":"公司章程","sig":"'法定代表人的产生和变更依照《公司法》、上级主管部门有关规定和本章程执行'而章程本身未规定","ask":"「本章程目前未明确变更办法，提请注意。根据新公司法规定，法定代表人的产生与变更应当在公司章程中载明。」（《公司法》2023 修订第 46 条）","act":"【批注】/【补充】","fail":"无。","failReal":""},{"id":"T7-2","pack":"T7","t":"不设监事而由内审机构行权","when":"新公司法下不设监事会/监事的章程","sig":"'由公司内设审计机构依法行使相关职权'","ask":"「提请注意，内审机构无法完全替代监事行使职权（例如无法替代监事对董事、高级管理人员提起诉讼的权利），建议增加'依法'的前提。」","act":"【批注】","fail":"设审计委员会（而非内审机构）行权的，属法定路径，不适用。","failReal":"设审计委员会（而非内审机构）行权的，属法定路径，不适用。"},{"id":"T7-3","pack":"T7","t":"召集与主持顺位须与公司法一致","when":"章程股东会/董事会条款","sig":"'董事长因故不能主持时，由董事长授权一名董事主持'——与《公司法》的顺位不一致","ask":"「根据新公司法第六十三条，股东会会议由董事会召集，董事长主持；董事长不能履行职务或者不履行职务的，由副董事长主持；副董事长不能履行职务或者不履行职务的，由过半数的董事共同推举一名董事主持。」（董事会对应第七十二条）","act":"【修订】","fail":"公司未设副董事长的，可略过该顺位但须写明。","failReal":"公司未设副董事长的，可略过该顺位但须写明。"},{"id":"T7-4","pack":"T7","t":"推举不成时的兜底安排会引发争议","when":"章程约定推举不成由某方提名董事召集","sig":"'过半数董事推举不成的，由某一方股东提名的董事召集/主持'","ask":"「过半数董事推选的董事也无法召集、主持的情况下，此处约定的由××或基金提名的董事召集/主持届时可能引发争议（由哪一方董事召集/主持），提请关注。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T7-5","pack":"T7","t":"注册资本、股东与工商登记不一致","when":"章程修订稿","sig":"章程载明的注册资本与工商登记不一致；新股东已列入章程","ask":"「工商登记显示注册资本仍为变更前的金额，提请注意是否已履行注册资本变更手续。」「新股东是否已完成工商变更登记？请确认。」","act":"【批注】","fail":"章程修订本就是为办理变更登记而作的，提示即可，不影响用印。","failReal":"章程修订本就是为办理变更登记而作的，提示即可，不影响用印。"},{"id":"T7-6","pack":"T7","t":"控制权比例是否含本数","when":"章程约定控制权阈值","sig":"'持有公司股权应当维持在 X% 以上'——是否含本数不明","ask":"「以上含本数，提请确认。」「为避免争议，建议在章程内明确。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T7-7","pack":"T7","t":"高管推荐主体错位","when":"项目公司章程，股东为集团下属平台公司","sig":"'总经理由集团公司推荐'，而章程载明的股东是其下属平台公司","ask":"「提请确认，总经理由集团公司还是本公司股东推荐？原则上应当由股东直接推荐。」","act":"【批注】","fail":"集团另有委派管理办法的，按其执行。","failReal":"集团另有委派管理办法的，按其执行。"},{"id":"T7-8","pack":"T7","t":"表决权与分红基数（认缴/实缴）","when":"国企或合资项目公司章程","sig":"'股东按出资比例行使表决权''按实缴出资比例对利润全额进行分配'","ask":"表决权基数未写清的直接加'实缴'并批注确认；分红条款「请确认可分配利润是否全额分配。」","act":"【修订】+【批注】","fail":"外部投资人已按认缴比例谈定治理安排的，改动等于变更商业合意，须先确认真实合意。","failReal":"外部投资人已按认缴比例谈定治理安排的，改动等于变更商业合意，须先确认真实合意。"},{"id":"T7-9","pack":"T7","t":"清算公告依据法规已失效","when":"章程清算条款","sig":"援引《公司登记管理条例（2016 修订）》","ask":"改引《市场主体登记管理条例》第三十二条。","act":"【修订】","fail":"无。","failReal":""},{"id":"T7-10","pack":"T7","t":"营业期限与解散事由","when":"章程","sig":"'公司章程规定的营业期限届满'而章程约定为长期","ask":"「目前约定为长期。」（提示两条呼应关系）","act":"【批注】","fail":"无。","failReal":""},{"id":"T7-11","pack":"T7","t":"章程自称与交叉引用（由合资协议改写）","when":"章程由合资协议或模板改写","sig":"'本章程【第 X 条】中第（七）（九）项职权'——由合资协议改写时交叉引用未同步","ask":"「请确认序号。」；自称错误的【修订】为'本章程'。","act":"【修订】/【批注】","fail":"无。","failReal":""},{"id":"T7-12","pack":"T7","t":"决议签署形式","when":"股东会/董事会决议","sig":"仅盖公司公章、无董事签字","ask":"「董事会决议应由出席会议的董事签字确认，仅盖公章存在决议真实性与效力争议风险，请补齐签字。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T8-1","pack":"T8","t":"承诺范围必须有时间与情形边界","when":"承诺函","sig":"'在项目生命周期内（【】），如再提出整改要求，所有费用由我司承担'——承诺无时间边界","ask":"「建议明确起止时间，例如自 XXX 之日起【】年。」并建议限缩触发情形。","act":"【批注】","fail":"无。","failReal":""},{"id":"T8-2","pack":"T8","t":"承诺函可能构成担保","when":"承诺函、安慰函","sig":"'保证''兜底''承担相应责任'","ask":"「该表述可能被认定为保证担保或债务加入，公司对外担保须经董事会/股东会决议，请核实是否已履行内部决议程序；如仅为安慰性表述，建议改为不构成担保的措辞。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T8-3","pack":"T8","t":"事实陈述的克制与限定","when":"分析报告、律师函、催告函","sig":"'极可能被认定为……'","ask":"「仅为推测，不排除还存在其他违法违规的情形。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T8-4","pack":"T8","t":"赔偿协议的付款前提与实际时序","when":"工亡、事故赔偿协议","sig":"'若经主管部门依法认定为工伤的，甲方按本协议履行赔偿'——付款前提与实际时序倒置","ask":"「此处虽然约定以认定工亡为前提，但实际在合同签订后就会支付，提请关注。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T8-5","pack":"T8","t":"保密条款是否需要加入","when":"赔偿协议、和解协议","sig":"有/无保密与违约金条款","ask":"「建议考虑是否添加。」（提问式，交经办人决策）","act":"【批注】","fail":"无。","failReal":""},{"id":"T8-6","pack":"T8","t":"法律意见中引用尚未生效的规则","when":"案件分析、咨询意见","sig":"援引新司法解释","ask":"「对于该点，新的建工司法解释已经明确，但该解释尚未正式发布；目前主要还是法官会议纪要以及司法实践中主流观点。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T9-1","pack":"T9","t":"乙方与丙方的义务与连带关系","when":"三方安全生产协议（原合同由丙方承接乙方义务）","sig":"'（二）乙方丙方安全责任'","ask":"「根据原合同，由丙方负责承接乙方的合同义务，乙方承担连带责任，本协议中乙方、丙方的安全生产相关管理工作是否实际都是丙方在实际实施（乙方承担连带责任），请确认。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T9-2","pack":"T9","t":"我方赔偿责任的情形限缩","when":"安全协议中约定甲方赔偿责任","sig":"'因甲方设备设施故障、毁坏造成丙方损失的，根据甲方过错程度承担相应的全额赔偿责任'","ask":"「建议尽可能限缩情形（例如，甲方设备设施故障、毁坏是否可能造成丙方损失？可能性越低对我方越有利），避免宽泛、笼统的描述。」","act":"【修订】/【批注】","fail":"无。","failReal":""},{"id":"T9-3","pack":"T9","t":"违约金标准与'严重后果'的可操作性","when":"安全协议罚则","sig":"'造成严重后果的，甲方可以终止合作协议并追究法律责任'——'严重后果'无标准","ask":"「什么样算严重后果呢？如果缺少明确标准，这一项在适用的时候可能会出现障碍。」；违约金计算方式需具体（金额或计算公式）。","act":"【批注】","fail":"无。","failReal":""},{"id":"T9-4","pack":"T9","t":"工程地点必须具体到可识别","when":"安全协议、施工类合同","sig":"'工程地点：××市××园区××公司'","ask":"「建议约定具体地址（例如 XXX 厂区 XX 楼）。」「此处地址太过宽泛，建议明确具体位置。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T10-1","pack":"T10","t":"工程变更合规审查表的数据自洽","when":"内部报审表、变更基础信息表","sig":"'固定总价/单价'未填；变更前后的数量、金额空缺","ask":"「没填写单价。」「总价是否需要填写？」「请确认金额。」「为什么变更后的数量与变更前不一致，建议确认。」","act":"【批注】","fail":"——表格类不做条款审查，只做数据自洽与依据审查。","failReal":"——表格类不做条款审查，只做数据自洽与依据审查。"},{"id":"T10-2","pack":"T10","t":"表内数字与支撑文件不一致","when":"内部报审表","sig":"表内暂定总价与所附变更审批文件不符","ask":"引具体数字：「上位文件载明的暂定总价与本表不一致，提请确认。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T10-3","pack":"T10","t":"代付协议中的付款义务与违约责任分配","when":"三方代付协议","sig":"'丙方向甲方支付并收到费用后，视为乙方完成付款义务'；'丙方未支付的，乙方应立即支付并承担逾期违约责任'——两句互相矛盾","ask":"「请确认逾期支付等产生的违约责任是否由乙方自行承担？」「与上位合同约定的期限口径是否一致？」（核对上位合同口径）","act":"【批注】","fail":"无。","failReal":""},{"id":"T10-4","pack":"T10","t":"结算触发：分别验收还是统一验收","when":"多项目、多批次结算","sig":"'全部完工并通过验收后开始结算'表述不明","ask":"提问式批注 + 默认处理：「需要全部完工并通过验收才开始结算，还是验收一个结算一个？当前表述不明确，暂按全部验收后启动结算来约定，请经办人确认。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T10-5","pack":"T10","t":"新增工程量的明细化","when":"施工／服务补充协议新增工作范围","sig":"'新增以下工作内容：全部××专项工程（具体内容及费用详见附件 X）'而该附件仅为费用清单","ask":"「当前附件1本质还是费用明细清单，对于增加的工程量只有笼统描述，如可以进一步明确具体工程量的，建议通过附约定新增的工程量（明确增加的费用所形成的具体工程量明细）。」","act":"【批注】","fail":"无。","failReal":""},{"id":"T10-6","pack":"T10","t":"新增部分的付款模式与原合同不一致","when":"补充协议单独约定新增费用支付","sig":"'新增费用以此金额为计算基数，按下列节点及比例支付'——与原合同付款模式不一致","ask":"「提请注意，当前价款支付模式与原协议不一致，是否单独支付（如果单独支付的，下列文件建议明确是单独针对新增工程的还是针对整体工程的）。」「是否针对新增工程部分？建议明确。同理，后续的相关手续文件，是否针对新增工程部分？」","act":"【批注】","fail":"无。","failReal":""}]};
+const SCHEMA = 1;
+let SRC = null;
+function adoptSource(obj, origin, label){
+  if (!obj || !Array.isArray(obj.cards) || !obj.cards.length) throw new Error("这个文件里没有 cards");
+  SRC = { schema: obj.schema || SCHEMA, version: obj.version || "未标版本", updated: obj.updated || "",
+    note: obj.note || "", packs: (Array.isArray(obj.packs) && obj.packs.length) ? obj.packs : BUILTIN.packs,
+    cards: obj.cards, roles: Array.isArray(obj.roles) && obj.roles.length ? obj.roles : null,
+    log: Array.isArray(obj.log) ? obj.log : [], origin, label };
+  SRC.cards.forEach(c => { if (c.failReal === undefined) c.failReal = /^(无。?|——)?$/.test((c.fail||"").trim()) ? "" : c.fail; });
+}
+try { if (window.HTZPT_RULES) adoptSource(window.HTZPT_RULES, "ext", "同目录 rules.js"); }
+catch(e){ window.__MOUNT_ERR = e.message; }
+if (!SRC) adoptSource(BUILTIN, "builtin", "内置");
+
+const PACKS = () => SRC.packs;
+const LBL = k => (PACKS().find(p => p.k === k) || {}).label || k;
+const SHORT = k => LBL(k).replace(/^(情形|类型)｜/, "");
+const DOC_PACKS = ["T7","T8"];                       // 文书产线用得上的类型包
+const typeKeys = () => PACKS().map(p=>p.k).filter(k => /^T\d+$/.test(k));
+const situKeys = () => PACKS().map(p=>p.k).filter(k => /^S\d+$/.test(k) && k !== "S6");
+
+/* ═══════════ 文件读写 ═══════════ */
+const FS_OK = typeof window.showSaveFilePicker === "function" && typeof window.showOpenFilePicker === "function";
+let WRITE = null, WRITE_READY = false, LIBS = [];
+function stampNow(){ const d=new Date(), p=x=>String(x).padStart(2,"0"); return {
+  file:`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`,
+  text:`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`,
+  day:`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}` }; }
+function libTime(lib,name){ if(lib&&lib.ts) return lib.ts;
+  const m=String(name||"").match(/(\d{8})-(\d{6})/);
+  return m?`${m[1].slice(0,4)}-${m[1].slice(4,6)}-${m[1].slice(6,8)} ${m[2].slice(0,2)}:${m[2].slice(2,4)}:${m[2].slice(4,6)}`:((lib&&lib.updated)||""); }
+const IDB={name:"htzpt2",store:"kv"};
+function idbOpen(){ return new Promise((res,rej)=>{ let r; try{r=indexedDB.open(IDB.name,1);}catch(e){return rej(e);}
+  r.onupgradeneeded=()=>r.result.createObjectStore(IDB.store); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbGet(k){ try{ const d=await idbOpen(); return await new Promise((res,rej)=>{
+  const q=d.transaction(IDB.store,"readonly").objectStore(IDB.store).get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }catch(e){ return undefined; } }
+async function idbPut(k,v){ try{ const d=await idbOpen(); await new Promise((res,rej)=>{
+  const t=d.transaction(IDB.store,"readwrite"); t.objectStore(IDB.store).put(v,k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }catch(e){} }
+const isHandle = h => h && typeof h.queryPermission==="function" && typeof h.createWritable==="function";
+async function perm(h,ask,mode){ if(!h||!h.queryPermission) return false; const o={mode:mode||"readwrite"};
+  if(await h.queryPermission(o)==="granted") return true; if(!ask) return false; return (await h.requestPermission(o))==="granted"; }
+async function rememberHandle(h){ const l=(await idbGet("libHandles"))||[];
+  for(const x of l){ try{ if(await x.isSameEntry(h)) return l; }catch(e){} } l.push(h); await idbPut("libHandles",l.slice(-20)); return l; }
+function parseRuleFile(t){ t=t.trim(); if(t.startsWith("{")||t.startsWith("[")) return JSON.parse(t);
+  const m=t.match(/=\s*([\s\S]*?);?\s*$/); if(!m) throw new Error("看不出格式"); return JSON.parse(m[1].replace(/;\s*$/,"")); }
+async function readLib(h){ try{ if(!(await perm(h,false,"read"))) return null; const f=await h.getFile();
+  const lib=parseRuleFile(await f.text()); if(!lib||!Array.isArray(lib.cards)||!lib.cards.length) return null;
+  return {handle:h,name:h.name,lib,ts:libTime(lib,h.name),count:lib.cards.length}; }catch(e){ return null; } }
+async function discover(){ const found=[],seen=new Set();
+  const push=it=>{ if(!it) return; const k=it.name+"|"+it.ts; if(seen.has(k)) return; seen.add(k); found.push(it); };
+  for(const h of ((await idbGet("libHandles"))||[])) if(isHandle(h)) push(await readLib(h));
+  if(window.HTZPT_RULES && Array.isArray(window.HTZPT_RULES.cards) && window.HTZPT_RULES.cards.length)
+    push({handle:null,name:"rules.js（同目录）",lib:window.HTZPT_RULES,ts:libTime(window.HTZPT_RULES,"rules.js"),count:window.HTZPT_RULES.cards.length});
+  found.sort((a,b)=>String(b.ts).localeCompare(String(a.ts))); LIBS=found; return found; }
+async function useLib(it,remember){ if(!it) return false; adoptSource(it.lib, it.handle?"ext":"script", it.name);
+  if(it.handle){ WRITE=it.handle; WRITE_READY=await perm(it.handle,false); } else { WRITE=null; WRITE_READY=false; }
+  if(remember) await idbPut("activeLib",it.name); return true; }
+async function bootLibs(){ const l=await discover(); if(!l.length) return;
+  const want=await idbGet("activeLib"); await useLib((want&&l.find(x=>x.name===want))||l[0],false); }
+async function writeThrough(logLine){
+  if(!WRITE||!WRITE_READY) return false;
+  const lib=bakedLibrary({keepVersion:true,log:logLine});
+  try{ const w=await WRITE.createWritable(); await w.write("window.HTZPT_RULES = "+JSON.stringify(lib,null,1)+";\n"); await w.close(); }
+  catch(err){ WRITE_READY=false; toast("写不进 "+(WRITE.name||"规则库")+"："+(err&&err.message||"未知")); return false; }
+  adoptSource(lib,"ext",WRITE.name); ov={off:{},edit:{},add:[]}; save(); await discover(); return true; }
+
+/* ═══════════ 本机改动 ═══════════ */
+const KEY="htzpt2.ov";
+let ov={off:{},edit:{},add:[]};
+try{ const r=localStorage.getItem(KEY); if(r) ov=Object.assign(ov,JSON.parse(r)); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(ov)); }catch(e){} }
+function cards(){ const src=SRC.cards, ids=new Set(src.map(c=>c.id));
+  const l=src.map(c=>{ const e=ov.edit[c.id]; return e?Object.assign({},c,e,{_edited:true}):c; });
+  ov.add.forEach(c=>{ if(!ids.has(c.id)) l.push(Object.assign({},c,{_added:true})); });
+  return l.map(c=>Object.assign({},c,{_off:!!ov.off[c.id]})); }
+const nChanges=()=>Object.keys(ov.off).length+Object.keys(ov.edit).length+ov.add.length;
+
+/* ═══════════ 状态 ═══════════ */
+const ROLES_K=["甲方","乙方","发包人","买方","委托方","承租方","出租方","出借人／股东"];
+const ROLES_W=["股东","出资人","发函方","受函方","被授权人","填报单位"];
+const DOCKIND=[["zc","公司章程／章程修正案"],["jy","股东会／董事会决议"],["hj","函件（告知·催告·承诺·律师函·复函）"],
+  ["zd","内部制度／议事规则"],["bs","合规审查基础信息表／内部报审表"],["qt","其他文书"]];
+const st={ mode:"k", type:"", role:ROLES_K[0], track:"A", situ:new Set(), doc:"zc",
+  org:"", note:"", law:true, tyc:true, sign:"审查人", t1:"", t2:"", file:"", who:"ai",
+  step:"review", scope:"on", q:"", open:{} };
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+/* ═══════════ 左栏 ═══════════ */
+function chipRow(host,items,on,pick){ host.innerHTML="";
+  items.forEach(it=>{ const [v,l]=Array.isArray(it)?it:[it,it]; const b=document.createElement("button");
+    b.className="chip"; b.textContent=l; b.setAttribute("aria-pressed",on(v)); b.onclick=()=>pick(v); host.appendChild(b); }); }
+
+function paintLeft(){
+  const K = st.mode==="k";
+  // 类型
+  const sel=$("f-type"); sel.innerHTML="";
+  const opts = K ? [["","先选合同类型"]].concat(typeKeys().map(k=>[k,SHORT(k)]))
+                 : DOCKIND;
+  opts.forEach(([v,l])=>{ const o=document.createElement("option"); o.value=v; o.textContent=l; sel.appendChild(o); });
+  sel.value = K ? st.type : st.doc;
+  sel.onchange = e => { if(K) st.type=e.target.value; else st.doc=e.target.value; render(); };
+  // 角色
+  const roles = (SRC.roles && K) ? SRC.roles : (K?ROLES_K:ROLES_W);
+  if (!roles.includes(st.role)) st.role = roles[0];
+  chipRow($("f-role"),roles,v=>st.role===v,v=>{st.role=v;paintLeft();render();});
+  // 文本来源（合同产线才有 A/B 双轨）
+  $("sec-track").style.display = K ? "" : "none";
+  if (K){
+    chipRow($("f-track"),[["A","我方制式模板"],["B","对方／自拟文本"]],v=>st.track===v,v=>{
+      st.track=v; if(v==="B") st.situ.add("S6"); else st.situ.delete("S6"); paintLeft(); render(); });
+    $("trackhint").textContent = st.track==="A"
+      ? "默认信任模板正文，重点怀疑填进去的和改过的内容。"
+      : "不预设任何条款可信，全面审查，并加载对方格式条款要点。";
+  }
+  // 情形
+  $("sec-situ").style.display = K ? "" : "none";
+  if (K) chipRow($("f-situ"), situKeys().map(k=>[k,SHORT(k)]), v=>st.situ.has(v),
+    v=>{ st.situ.has(v)?st.situ.delete(v):st.situ.add(v); paintLeft(); render(); });
+  chipRow($("f-who"), [["ai","AI 直接落盘"],["man","我在落盘台落"]], v=>st.who===v,
+    v=>{ st.who=v; paintLeft(); render(); });
+  $("mcphint").textContent = (st.law && st.tyc) ? "" : "未接的部分会改成待核清单，要求模型不得凭记忆断言。";
+  $("submeta").textContent = K ? "合同 · 制式与非制式双轨" : "非合同文书 · 章程 决议 函件 制度 报审表";
+}
+["f-org","f-note","f-sign","f-t1","f-t2","f-file"].forEach(id=>{
+  const k={ "f-org":"org","f-note":"note","f-sign":"sign","f-t1":"t1","f-t2":"t2","f-file":"file" }[id];
+  $(id).oninput = e => { st[k]=e.target.value; render(); }; });
+["mcp-law","mcp-tyc"].forEach(id=>{ const k = id==="mcp-law"?"law":"tyc";
+  $(id).onchange = e => { st[k]=e.target.checked; paintLeft(); render(); }; });
+document.querySelectorAll("#mode button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#mode button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  st.mode=b.dataset.mode; st.open={}; paintLeft(); render(); });
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t));
+  st.step=t.dataset.step; render(); });
+
+/* ═══════════ 规则装配 ═══════════ */
+function activePacks(){
+  const have = k => PACKS().some(p=>p.k===k);
+  if (st.mode==="w"){
+    const m = { zc:["T7"], jy:["T7"], hj:["T8"], zd:[], bs:[], qt:[] }[st.doc] || [];
+    return ["CORE"].concat(m).filter(have);
+  }
+  return ["CORE", ...[...st.situ].sort()].concat(st.type?[st.type]:[]).filter(have);
+}
+function activeCards(){ const s=new Set(activePacks()); return cards().filter(c=>s.has(c.pack)&&!c._off); }
+function ruleBlock(){
+  const packs=activePacks(), cs=activeCards();
+  return packs.map(p=>{ const l=cs.filter(c=>c.pack===p); if(!l.length) return "";
+    return `〔${LBL(p)}〕\n`+l.map(c=>{
+      let s=`【${c.id}】${c.t}\n  在文本里看到：${c.sig}\n  怎么写批注：${c.ask}`;
+      if(c.failReal) s+=`\n  例外：${c.failReal}`;
+      return s; }).join("\n"); }).filter(Boolean).join("\n\n");
+}
+
+/* ═══════════ 共用片段 ═══════════ */
+const SIGN = () => st.sign.trim() || "审查人";
+const TL = () => (st.t1.trim()||st.t2.trim())
+  ? `${st.t1.trim()||"【起】"}—${st.t2.trim()||"【止】"}（北京时间）`
+  : "未指定，从收到文件的时刻起算，落在配置的工作时段内（北京时间），不落周末";
+const FILE = () => st.file.trim() || "【来件文件名】";
+
+function mcpBlock(){
+  const on=[], off=[];
+  (st.law?on:off).push("法律法规检索");
+  (st.tyc?on:off).push("企业信息查询");
+  let s = "";
+  if (on.length) s += `已接入：${on.join("、")}。凡涉及法条编号、法规时效、仲裁机构全称、企业登记与涉诉信息，一律实查后再写，不得凭记忆。\n`;
+  if (off.length) s += `未接入：${off.join("、")}。凡需要这些信息才能下判断的，不得凭记忆断言，改为写进「需经办部门确认事项」，逐项写明查什么、查到不同结果分别怎么处理。宁可留待核，不许编。\n`;
+  return s;
+}
+const SEQ = `═══ 执行顺序（一次完成，但必须按这个顺序做，不得跳步）
+
+第一步 · 裸审。先不要看第五节的规则清单。从头逐段读完整份文件，凡出现下面任何一种感觉的地方，全部记下来：
+· 读两遍才明白在说什么；
+· 算不过来——金额大小写、含税与不含税、分期之和、容量口径、日期先后对不上；
+· 前后两处说的不是一回事，或与另一份文件说的不是一回事；
+· 对方的义务没有对应的责任，我方的责任没有对应的对价；
+· 这套机制在时间轴上跑不通（要求我方在某件事发生之前，做完一件只能在它之后才做得了的事）；
+· 如果对方完全按字面履行，我方会拿到一个我方并不想要的结果。
+产出写进输出格式第五项「裸审发现」。后面任何一步都不得删除或降级其中任何一条。
+
+第二步 · 对照第五节规则清单补漏。只做加法：规则命中而第一步漏掉的，补进来。
+每条规则后面可能跟着一行「例外」，写的是什么情况下不该按这条办——先读例外，再决定要不要提。
+逐条问自己"这份文件是不是这条说的那种情况"，不是就跳过，不要硬套。
+
+第三步 · 回答两道必答题（输出格式十一、十二），不得跳过、不得答"无"而不给理由。`;
+
+const TONE = `── 三、批注怎么写（全篇最容易做错的地方）
+
+文件内批注要极短——一句问句或一句提示即可，控制在 20 字上下、不超过 40 字。不写法条、不写"理由是……"、不写长段推演。说理属于审查报告，不属于文件内批注。
+
+· 单条 ≤ 40 字为常态；超过 40 字的必须是"机制跑不通"型，全篇不宜超过三分之一。
+· 一条批注只讲一个问题。禁止"如 A 则……；如确需 B 则……"双分支写法，只保留主推方案。
+· 句式限于以下几类，不要自创冗长句式：
+  事实待核 —「请确认。」「请注意填写。」「请核实。」「请确认金额。」「请补充大写金额。」「未勾选。」「勾选了两处，请确认以哪个为准？」「没有这个法。」「没有这个附件，附件 X 是另一份文件。」
+  风险留痕 —「提请关注。」「提请注意。」「违约责任较高，提请关注。」「涉及减轻对方义务，提请关注。」
+  建议明确 —「建议明确起止时间，例如自 XXX 之日起【】年。」「建议明确具体地址（例如 XXX 厂区 XX 楼）。」「建议尽可能限缩情形，避免宽泛、笼统的描述。」
+  提问式（事实不明时首选）—「是否需要注明台数？」「份数是否写反了？请确认。」「为什么变更后的数量与变更前不一致，建议确认。」
+  顺承 —「同上。」（同一问题重复出现时，第二处起用）
+· 提问式批注若你已按某种理解拟了文字，须附默认处理：「目前按照未完成部分退回进行约定。」
+· 明知客户可能不改的（模板二选一全保留、格式条款）也要批注，留痕即尽责。
+
+"机制跑不通"型是唯一允许展开的，仍以推演后果为主、法条为辅。示例：
+「该约定实际要求至少提前一年支付下期租金。建议约定在新的租赁年度开始后【】日内支付，或按首笔租金支付日每两年顺延。」
+「在贵方落实约定的资金支持前，原合同尚未生效，相对方有权拒绝履行原合同项下义务，提请关注该等情形下对贵方项目的影响。」`;
+
+const RESTRAINT = `── 四、克制原则
+
+1. 目录、页码、页眉页脚不直接修改。有明显错误的批注指出，报告末尾统一提醒"定稿后请更新目录域"。
+2. 不添加复述法律强制性规定的条款（输出前强制自查）：法律、行政法规、监管规章已有强制性规定的（如国有产权转让须按 32 号令履行审批、审计、评估及进场交易程序），加不加都要遵守，不建议增加此类宣示性条款；仅当现有条款与强制性规定冲突时才修订。输出前逐条自查所有【补充】，凡实质为复述法律或规章程序要求的，一律降级为【提示-无需批注】并删掉建议文本。
+   例外：本文件需提交政府备案或对外出具、且宣示性表述本身有展示功能的，可保留，改为批注说明。
+   **反过来也要守住**：凡是改变默认法律后果、或把法律留给当事人约定的事项写死的条款，不是"复述法律"，
+   不得以本条为由降级或省略。典型：各甲方分别结算、分别开票、互不承担连带清偿责任；约定管辖落到
+   具体主体；起租日改为实际交付日；违约金计算基准与上下限；解除权与退出口。这类【补充】必须提，
+   并附可直接采用的条款文本。
+3. 删除冗余优先于新增：正文未设置对应机制的引用性条款（全文未设履约保证金却出现"索扣履约保证金"、无进度款安排却出现进度款结算、引用并不存在的章节名）→ 建议删除或去掉引用。
+4. 无法确定的商业事项不代客户决定：金额、日期、标准拿不准的，用"暂定""【】"占位并批注请经办人补充，禁止编造数字。
+5. 能修订解决的不留"提请注意"式批注：跨文件或前后条款冲突且效力顺序明确的，直接修订占优文件把双方合意写进去；仅在无法判断哪个口径正确时才用提示式批注，且须写明不改的默认后果。
+6. "建议增加／建议明确"必须附可直接采用的条款文本，要素齐备——计算基准、基准时点、兜底安排、数额上下限。暂无法确定的数字标注"暂估金额"并写明后续确定机制。`;
+
+const LAND = () => st.who === "ai" ? `── 落盘口径（写进报告第十五项）
+
+报告出完之后，你自己把第六项的落盘块落进来件——用 contract-review-sop 技能自带的程序
+（scripts/oneshot.py，不用去别处找），**不要一条修订跑一条命令、不要手写 XML、不要整篇另存**：
+
+    python3 $S/oneshot.py --input "${FILE()}" --block 落盘块.txt --auto --dry-run --json -
+    python3 $S/oneshot.py --input "${FILE()}" --block 落盘块.txt --auto --json 报告.json \\
+        --emit-block 实际落盘块.txt
+
+· 署名：${SIGN()}，全文只允许这一个作者，来件里第三方的痕迹一个字不动。
+· 时间线：${TL()}。写入的是北京时间的钟面值，绝不折算 UTC。
+· 交付后缀与来件一致；目录、页码、页眉页脚不改；交付前跑 C0–C7 体检，不过关不出文件。
+· --auto 会自己收敛：修订落在来件既有修订块上（下不了刀）的自动降级为批注、候选相似度 ≥0.9
+  且明显领先的自动指认；收不住的进 JSON 的 needs_human。
+· needs_human 里的：看候选段落，--search 核对来件真实原文，决定写进一个 --patch 文件一次交回
+  （改口径 kind／改原文 src／指认 pick／跳过 skip），最多三轮；仍拿不准的 skip 掉并在回复里列明。
+· 自动降级写的批注是占位口径，交付前用 patch 换成你自己的话，并在回复里逐条向经办人交代。
+· 命中下面任一条，就别自己落了，只交落盘块纯文字让人在「落盘台」上手落：
+  来件是 .doc 而本机没有 LibreOffice；体检 C2 或 C7 挂；落不上的条目超过三分之一；过半段落长在表格里。
+· 报告写在对话里，不落地文件。
+
+第十五项照抄这一句：本件修订 X 处、批注 Y 条，署名与时间线如上，已通过 C0–C7 体检；
+未落盘 Z 条已逐条列明；目录与页码未改。
+
+${BLOCKSPEC}` : `── 落盘口径（写进报告第十五项；落盘由「落盘台」程序执行，你不要碰文件）
+
+修订与批注由「落盘台」程序按第六项的落盘块自动写入来件：
+· 署名：${SIGN()}，全文只允许这一个作者，来件里第三方的痕迹一个字不动。
+· 时间线：${TL()}。写入的是北京时间的钟面值，绝不折算 UTC。
+· 交付后缀与来件一致；目录、页码、页眉页脚不改；交付前跑 C0–C7 体检，不过关不出文件。
+你这一步只产出文字：报告十六项 ＋ 格式正确的落盘块。不要打开文件、不要生成文件、不要写 XML、不要调用任何落盘技能。
+第十五项照抄这一句即可：本件修订与批注由落盘台按第六项落盘块落盘，署名与时间线见程序设置，目录与页码未改。
+
+${BLOCKSPEC}`;
+
+/* ═══════════ 落盘块规范（AI 唯一要产出的机器可读物） ═══════════ */
+const BLOCKSPEC = `── 落盘块怎么写（第六项的格式，错一条就落不上，务必逐字照办）
+
+块的样子（自己的条目替换掉示例，格式一字不动）：
+
+<<<落盘>>>
+@修订 1 | 第7.2条
+原文：甲方应在收到发票后15日内付款
+改为：甲方应在收到发票且发票经审核无误后30日内付款
+理由：付款起算点不明确，审核期未约定
+@删除 2 | 第9.4条
+原文：，并按日万分之五支付违约金
+理由：同一违约行为重复约定违约金
+@批注 3 | 第3.1条
+锚点：甲方应在收到发票后15日内付款
+批注：请确认审核时限。
+理由：属商业判断，需经办人决策
+@新增 4 | 第9条之后
+锚点：本合同一式肆份，甲乙双方各执贰份。
+正文：9.5 因不可抗力导致本合同无法履行的，双方互不承担违约责任。
+理由：缺不可抗力条款
+@删段 5 | 第11.3条
+锚点：甲方有权索扣履约保证金
+理由：全文未设履约保证金，该条无所依附
+<<<落盘完>>>
+
+规矩：
+
+1. 只有五种条目：@修订（改字）、@删除（整串删掉）、@批注、@新增（整段新增）、@删段（整段删掉）。
+   头行格式固定为「@类型 序号 | 条款位置」。字段名固定为 原文／改为／锚点／批注／正文／理由，中文冒号半角冒号都行。
+2. 「原文」「锚点」必须是来件里逐字照抄的一小段，标点一起抄。
+   空格、全角半角、弯直引号的差异程序会自己归一；但不许改字、不许省略、不许用「……」代替中间部分。
+   拿不准就抄短一点——抄得越短越好定位，只要在该条款里唯一即可。
+3. 「原文」不得跨自然段。一句话里要改两处就写两条。整段替换请拆成「删段＋新增」。
+4. 「改为」写改完之后那一小段的完整文字（把原文那一段完整重写一遍，别只写变化的字）。
+   程序会自动比对，只把真正变了的那几个字包进修订痕迹，所以你不必自己算最小改动。
+5. 「批注」≤40 字，一条只讲一个问题，直接可粘进 Word；说理写在「理由」里，不进 Word。
+6. 「正文」多段就分行写，程序按条款号开头判断分段。
+7. 数字、金额、名称一律照抄来件写法，不得改写成别的格式。
+8. 一条条目对应报告里的一个序号，序号连续，第七项按同一套序号给依据与说理。
+9. 块里不写表格、不写 markdown、不加代码围栏、不写旁白。块外的报告正文照常写。
+10. 目录、页码、页眉页脚一律不改，只用 @批注；正文在表格里、图片里的问题写进第八项，不进落盘块。`;
+
+/* ═══════════ 合同产线：一步式提示词 ═══════════ */
+function promptContract(){
+  const t = typeKeys().includes(st.type) ? SHORT(st.type) : "未指定";
+  const packs = activePacks(), cs = activeCards();
+  const trackTxt = st.track === "A"
+    ? "A 类（我方制式模板）——集团法务部统一制定、已内部审核，立场天然偏甲方。默认信任模板正文，怀疑一切「填进去的」和「改过的」内容；重点在第六节确定性校验九查。"
+    : "B 类（对方模板／双方自拟／政府或垄断行业格式文本）——条款体系可能不完整、立场中性或偏对方。不预设任何条款可信，逐条过。";
+return `你是${st.org||"我方"}（我方为${st.role}）的合同审查法务。审查以下文件并出具审查报告。
+
+${mcpBlock()}
+${SEQ}
+
+── 一、立场与分类
+本件按 ${trackTxt}
+一次审查若同时含我方模板主合同与对方拟的技术协议，分别适用，并强制执行第七节跨文件一致性审查。
+
+── 二、修订 vs 批注的分界
+
+【修订】法律硬伤：违反强制性规定（如保修期低于《建设工程质量管理条例》第 40 条法定最低期）；同一违约行为重复约定违约金；仲裁机构名称错误或约定不明；"订金／定金"误用；对方格式条款免除其责任、加重我方责任、排除我方主要权利。
+【修订】确定性错误（只有一个正确答案、不需要问经办人）：交叉引用条号错误；称谓不统一（同一文件"甲方"与"发包人"混用、施工合同沿用"买卖合同"字样）；未选项未划"/"；错别字近形字（"厂/广""漏点/漏水""帐/账"）；单位符号错误（㎡ 写成 m）；引用并不存在的法规名称；正文引用并不存在的章节或附件名。
+【批注】商业判断事项：付款节点、价格、验收宽严、质保长短、交期、税费负担、违约金高低——合法但需经办人决策。
+【批注】事实待核：金额、数量、日期、主体、地址、比例填得对不对，你无从判断的。一律问，不代填。
+【补充】条款缺漏：应有而未约定、且非法律已有强制规定的事项。须附可直接采用的条款文本。
+【提示-无需批注】常规且不严苛：常规违约责任、无严苛违约金——避免批注过密冲淡重点。
+
+每条输出先打标签。风险分级：可承受→批注提示；超出承受限度→修改意见并注明"如无法修改则审查不通过"。
+
+${TONE}
+
+${RESTRAINT}
+
+── 五、本次装配的规则（${packs.map(SHORT).join("、")}，共 ${cs.length} 条）
+
+${ruleBlock()}
+
+── 六、确定性校验九查（逐项过，命中即处理，不需要法律判断）
+
+1 空格与勾选：所有下划线、【】、○ 逐个过。未填「请注意填写」；未勾「未勾选。」；勾了两处「勾选了两处，请确认以哪个为准？」；模板"【注：可多选】"等指导语在定稿文本中应删除；未选项划"/"封闭。
+2 金额：大小写一致；不含税价＋税额＝含税总价（按税率验算，并批注请确认税率与业务匹配）；分期各期之和＝总价；单价×数量＝总价；与上位文件（变更审批文件、组价表、附件价格清单）金额是否一致。
+3 单位与口径：同一标的两处用不同单位；元/㎡ 与 元/m；台/套/项混用；毛量与净量、含税与不含税混排；以两种口径（设计值与验收值）描述同一个量。
+4 交叉引用（**每件必查，不是可选项**）：能跑命令的先跑脚本——contract-review-sop 技能的
+  scripts/xref/extract_index.py（或 contract-cross-reference-checker 技能的同名脚本）提出条号索引
+  与引用清单，再按判定规则逐条核存在性、层级称谓、语义匹配；跑不了脚本的，文内"见第 X 条"
+  "按第 X.X 条"逐一点开核对。核完在第九项写明「核了 X 处、发现 Y 处」，全文无引用的写「无」。
+  条号不存在、或唯一正确值可判定的【修订】；通用条款与专用条款同号并存、位阶不明的【批注】请核实；
+  新增删除条款后编号顺延。
+5 附件三对照：正文引用的附件序号与名称 ＝"合同组成文件"清单 ＝ 实际所附附件。三者任一不符即处理。
+6 份数：份数 ＝ 各方数 × 各自持有数（＋备案份）。三方合同却"一式贰份"→【修订】。
+7 主体名称：抬头、正文、签署页、收款账户、开票信息逐字一致，并与登记信息／公章一致；关联公司名称相近时逐字比对；分公司名称是否准确。
+8 日期推演：代入具体日期演算。租期届满年份、付款周期与提前量、计划竣工早于开工、"X 月完成"未特别约定应理解为当月月底前、补充协议与原合同同日签署的核实。
+9 法规真伪与时效：引用的法规是否真实存在、是否已失效、条文号是否准确。
+
+另：**错别字、衍字（重复字词）、括号不配对**属确定性错误，一律【修订】不批注。能跑命令的先跑
+contract-review-sop 技能的 scripts/typo.py 机械扫一遍（末/未、己/已、既/即、签定/签订、帐/账、
+帐/账、权力义务/权利义务、法人代表/法定代表人、「的的」「提交提交」这类），它直接出可并进
+落盘块的 @修订；跑不了脚本的，通读时逐段留意。已废止法名（合同法、物权法、担保法、公司登记管理条例）
+按第 9 项处理。
+
+── 七、还要做的两件事
+1 相对方资信：失信被执行人、限制高消费、终本案件（终本直指履约与赔偿能力，必须批注并附摘要，提示经办人附截图）；被执行人、股权冻结、经营异常、行政处罚、同类合同纠纷被告；存续状态、注册资本及实缴；经营范围是否覆盖本合同标的；涉资质的核查资质与合同要求匹配。
+2 跨文件一致性（多文件必查）：主体名称；交货期、付款安排、质保承诺、数量、单价、项目地点、工期节点在各文件间是否一致；技术协议是否在主合同中列为附件并约定优先顺序。冲突的以对我方有利者为准修订，并在主合同中明确解释顺序。
+
+── 八、交易背景（经办人已提供的照抄，未提供的从文件中判读，判读不出的写"未知"，不得臆测）
+- 我方角色：${st.role}
+- 合同类型：${t}
+- 文本来源：${st.track === "A" ? "我方制式模板" : "对方模板／双方自拟"}
+- 已识别情形：${st.situ.size ? [...st.situ].map(SHORT).join("、") : "无"}
+- 经办人补充：${st.note.trim() || "（未提供）"}
+其余按背景卡自行判读并在输出第二项列明：我方主体全称／我方一侧是否多主体及是否分属不同地市／是否有主合同或上位文件、本件是否为补充变更终止协议／是否已履行或应履行招投标程序、金额是否达法定必招标准／款项方向、是否先款后货、是否涉代付垫付／相对方性质／标的是否涉不动产、在建工程、农村土地／是否涉外币／项目所在地与我方所在地是否一致、项目当前阶段。
+
+── 九、输出格式（严格按此十六项，缺项不补则视为未完成）
+
+一、合同类型判断：A 类 / B 类 / 混合（分别列明各文件归类），一句话判断依据
+二、交易背景卡（10 项，未知的写"未知"）与本次装配的情形包
+三、审查结论（可用印 / 修改后可用印 / 存在重大风险需退回）
+四、相对方资信核查结果：相对方 —— 失信X/限高X/终本X/经营范围与资质 → 风险评级 高/中/低 ＋ 一句话结论
+五、裸审发现（第一步产出，原样保留，不得被后续步骤删改）
+六、落盘块（机器读；修订、删除、批注、新增条款、删段全部写在这一个块里，不再另列表格。格式见本节末尾「落盘块怎么写」，一字不得走样）
+七、依据与说理：按落盘块的序号逐条一行——序号 | 法律依据（法规名称＋条文号）| 说理。这一项写给审查报告用，不进 Word。
+八、落盘程序处理不了的：在表格内、图片内、页眉页脚、目录里，或需要整体重排、重新编号的问题——写明位置与建议处理方式，留给人工。
+九、确定性校验九查核对表：查项 | 发现 | 处理
+    （交叉引用一栏必须写「核了 X 处，发现 Y 处」；全文确无引用的写「无」，不许略过）
+十、跨文件一致性核对表：核对项 | 各文件表述 | 结果（✓一致 / ✗冲突-处理建议）
+十一、【清单外发现】必答，不得为空。确无的须写明你从哪三个以上非清单角度考虑过（例如条款间的经济后果是否对称、机制在时间轴上是否跑得通、对方完全按字面履行时我方会拿到什么、这份文本是从哪份模板改来的、改动处是否留下矛盾）仍未发现问题。
+十二、【清单证伪】必答。上面第五节这批规则里，哪几条在本合同背景下不适用、或者照套会误导？逐条说明理由。不得答"无"而不给理由。
+十三、需经办部门确认事项（交易背景、授权文件、招标文件、村民决议、待补材料${(!st.law||!st.tyc)?"、以及本次因未接工具而留待核实的事项":""}）
+十四、无需处理事项（一行一项）
+十五、落盘执行说明（按下方口径固定输出）
+十六、收尾提醒（固定）：目录及页码未作修改，定稿后请更新目录；如有条款增删，请同步更新编号与交叉引用。
+
+报告写在对话里，不落地文件（用户要文件再说）。
+每处修订定位到具体文件、条款号和原文，禁止泛泛而谈。无法判断是模板原文还是修改内容的，一律批注请经办人确认。金额及日期验算过程附报告末尾。
+
+${LAND()}
+
+── 待审文件
+【在此粘贴合同全文；多份文件分别标明文件名】`;
+}
+
+/* ═══════════ 文书产线：一步式提示词 ═══════════ */
+const DOCPOINTS = {
+zc:`── 五之二、章程专项要点
+
+A0 文书自称与交叉引用：章程全文自称「本章程」，出现「本协议」「双方约定」→【修订】或批注确认。章程常由合资协议或模板改写而来，"本协议第 X 条"≠"本章程第 Y 条"，逐处核对；"本章程【第 X 条】中第（X）（X）项职权"这类写法是否指向正确条款。
+A1 表决权与出资
+· 国企原则上按实缴出资比例行使表决权。表决权基数（认缴/实缴）没写清的直接【修订】加"实缴"并批注确认；合资协议已明确"实缴"而章程只写"出资比例"的直接修订统一；分红、增资优先认缴权基数同步核对。
+· 注册资本金 vs 项目资本金：股东出资义务对应公司注册资本，表述为"项目资本金"的【修订】为"公司注册资本（实缴）"；超出注册资本部分的资金性质（股东借款或增资）另行明确。
+· 外币出资：认缴为人民币、以外币实缴的，出资额标注"（等值美元）"并在出资表下加注折算规则——"境外股东以美元出资，按出资款实际入账日的人民币兑美元汇率中间价折算，累计折合人民币应达到其认缴出资额；入账日为非工作日或当日未公布中间价的，适用该日前最近一个工作日公布的中间价；汇率变动不影响持股比例。"
+· 出资期限符合《公司法》限期实缴（有限公司自成立之日起五年内缴足）；建议酌情设置逾期实缴违约责任（提问式批注）；加速到期条款核查。
+· 分红条款"按实缴出资比例对利润全额进行利润分配"→ 批注「请确认可分配利润是否全额分配。」
+A2 治理结构
+· 法定代表人的产生与变更办法必须在章程中载明（《公司法》2023 修订第 46 条）。仅写"依照《公司法》、上级主管部门有关规定和本章程执行"而章程本身未规定的 → 批注「本章程目前未明确变更办法，提请注意。根据新公司法规定，法定代表人的产生与变更应当在公司章程中载明。」
+· 股东会/董事会召集与主持顺位须与《公司法》第 63 条、第 72 条一致：董事长不能履行职务的由副董事长主持/召集，副董事长不能的由过半数董事共同推举。跳过副董事长直接写"由董事长授权一名董事主持"的【修订】。
+· 董事长产生方式：合资协议约定某方享有推荐权的须写入章程，否则因"不一致以章程为准"该权利可能落空 → 直接修订章程载明。用"推荐"不用"代表出任"。
+· 高管推荐主体错位：总经理"由××集团推荐"而股东为另一主体的 → 批注「提请确认，总经理由谁推荐？原则上应当是由股东直接推荐。」
+· 外部董事：除职工董事外，其他董事是否属外部董事主要看其是否在本单位另有任职。涉"外部董事过半数出席"条款时先核对本章程董事产生机制下是否会有外部董事——未设外部董事却保留该要求的会议将无法召开 →【修订】删除或调整董事结构。
+· 不设监事/监事会的：①全文清理监事残留表述、条款编号顺延；②约定"由公司内设审计机构依法行使相关职权"的须批注「提请注意，内审机构无法完全替代监事行使职权，如无法替代监事对董事、高级管理人员提起诉讼，建议增加"依法"的前提。」；③全体董事均为审计委员会成员的，独立性/特别出席要求只能作为原则性约定。
+· 控制权条款"维持在 X% 以上"是否含本数 → 批注「以上含本数，提请确认。」
+· "一定金额以上"类审批权限须写明具体金额标准。
+· 会议出席与表决规则须推演可操作性：把董事人数、法定出席人数、各方最低出席要求代入算一遍，看会不会出现"任一方缺席即流会"这种一方独有的否决权。
+· 高管设置全文自洽：正文经理条款、附则高管定义、合资协议三处口径一致。
+· 营业期限约定为长期的批注提请确认，解散事由条款与之呼应。
+A3 股权变动与国资衔接
+· 不得出现规避进场交易的安排（约定国有股权可不经评估按原值协议转让 →【修订】）；按克制原则第 2 条无需正面写入 32 号令程序条款。
+· 清算公告条款依据须为《市场主体登记管理条例》第三十二条，仍援引《公司登记管理条例》的 →【修订】。
+· 章程载明的注册资本、股东名册与工商登记不一致的，批注提示是否已履行变更登记手续。
+A4 章程 × 合资协议逐项比对（强制）：股权比例与出资安排、表决权基数、董事席位与董事长产生方式、董事会股东会出席规则与表决比例、监事/审计委员会设置、高管设置、特别决议事项清单、分红安排。先确认效力顺序条款；真实合意在合资协议而章程未载明的直接修订章程写入；无法判断的批注引两文件具体条文号并写明"如不调整为一致，将按章程约定执行"。`,
+jy:`── 五之二、决议专项要点
+
+· 决议事项属于该机构职权；表决比例达法定及章定要求（修改章程、增减资、合并分立解散等 2/3 以上）。
+· 出席与表决记载完整（应到/实到、同意/反对/弃权及表决权数），表决权数按实缴口径核对。
+· 决议内容与拟办事项一致、可执行（授权范围、办理人、有效期明确）。
+· 签署：股东会决议由股东盖章/签字、董事会决议由出席董事逐一签字，不接受仅盖公司章 → 批注「董事会决议应由出席会议的董事签字确认，仅盖公章存在决议真实性与效力争议风险，请补齐签字。」
+· 召集程序（召集人、通知期限、通知对象）、出席、表决（比例、回避）是否符合《公司法》及章程；程序瑕疵按不成立/可撤销风险分级提示。
+· 涉国资事项的决议核对是否载明"尚需报××批准后实施"。`,
+hj:`── 五之二、函件专项要点
+
+· 定性优先：区分意思通知（催告、解除通知）与设权文件（承诺函可能构成单方允诺/债务加入/保证）。承诺函出现"保证""兜底""承担责任"字样的 → 批注「该表述可能被认定为保证担保或债务加入，公司对外担保须经董事会/股东会决议，请核实是否已履行内部决议程序；如仅为安慰性表述，建议改为不构成担保的措辞。」
+· 承诺范围必须有边界：无期限、无范围的承诺 → 批注「建议明确起止时间，例如自 XXX 之日起【】年。」并建议限缩触发情形。
+· 事实陈述准确、有据（每一事实可对应证据），法律评价克制，避免自认对我方不利事实；不得写成我方过错（"因我方手续未办理齐全导致无法履行"→ 建议避免）。
+· 催告/解除类：核对合同约定的通知条件、宽限期、送达方式，函件内容与解除权行使要件对应；留存送达证据的操作提示。
+· 出具对象、抬头、落款、日期完整；对外承诺须核权限与内部审批。
+· 仅为推测的事实描述加限定语（「仅为推测，不排除还存在其他违法违规的情形。」）。`,
+zd:`── 五之二、制度／议事规则专项要点
+
+· 与上位法、集团制度不冲突（冲突条款逐条列出并修订）。
+· 职责边界清晰、流程闭环（审批层级、时限、例外处理、追责条款可执行）。
+· 追责条款须有明确标准："造成严重后果的可以终止合作并追究法律责任"→ 批注「什么样算严重后果呢？如果缺少明确标准，这一项在适用的时候可能会出现障碍。」
+· 罚则合法：对员工的罚款等无法律依据的处理方式 →【修订】为合法管理措施。`,
+bs:`── 五之二、报审表专项要点
+
+这类表格不做条款审查，做数据自洽与依据审查：
+· 必填项是否填全（"固定总价/单价"未填单价 →「没填写单价。」）。
+· 数据前后自洽：变更前后的数量、金额、工期是否对应；同一个量在两处对不上的必问（「为什么变更后的数量与变更前不一致，建议确认。」）。
+· 表内金额与所附支撑文件（变更审批文件、组价表）是否一致，不一致的引具体数字批注。
+· 变更事由是否属于合同约定的变更情形、是否需履行审批。
+· 变更后规模是否已建完，若否，工期是否需同步调整。`,
+qt:`── 五之二、其他文书
+
+按"定性 → 权限 → 程序 → 内容 → 一致性"五步走，参照最接近的类别执行。`
+};
+
+function promptDoc(){
+  const kind = (DOCKIND.find(d=>d[0]===st.doc)||["","文书"])[1];
+  const packs = activePacks(), cs = activeCards();
+return `你是${st.org||"我方"}的法务，审查以下非合同类法律文书并出具审查报告。默认立场：维护我方（本方／我方委派股东）在治理结构、表决权、信息权、退出安排上的利益；同时确保文书符合《公司法》及适用于本方的监管规定与内部制度。
+
+${mcpBlock()}
+${SEQ}
+
+── 一、定性三问（输出第一项必须回答）
+1 文书类型及效力属性（设权性文件／单方允诺／意思通知／内部规范／事实记载）；
+2 拟制主体与相对人，我方角色；
+3 是否有上位依据（法律法规、集团模板、上位制度、已签合同、合资协议、原合同），有的须调取比对。
+本次经办人已给定：文书类型＝${kind}；我方角色＝${st.role}。
+
+── 二、修订 vs 批注的分界
+
+【修订】法律硬伤：违反《公司法》等强制性规定（剥夺股东法定权利、决议表决比例低于法定标准）；决议内容超越该机构法定或章定职权；程序瑕疵致决议不成立、可撤销、无效；概念误用。
+【修订】确定性错误：文书自称错误（章程中出现"本协议""双方约定"）；由合资协议改写带入的交叉引用条号错误；引用已失效法规（如《公司登记管理条例》已被《市场主体登记管理条例》取代）；条文号错误；错别字；未选项未划"/"。
+【批注】治理／商业问题：表决机制、董事席位分配、分红安排、竞业限制范围等合法但需我方决策或谈判的事项。
+【批注】事实待核：数字、名称、比例、日期与工商登记或上位文件是否一致，你无从判断的。
+【批注】＋建议文字：表述不明——语焉不详、可两读、关键机制（表决权基数、通知期限、送达方式、审批金额标准）未写清。
+【提示-无需批注】常规条款：与法定内容一致、无损我方利益的常规表述。
+
+${TONE}
+
+允许展开的还有一类：须援引具体法条纠正程序表述的（如召集主持顺位），可写完整法条内容。
+
+${RESTRAINT}
+7. 比例原则：无实质影响的表述差异不修订；当下无法细化的机制可接受原则性约定，批注"届时仍需以股东会决议明确具体安排"；对当前治理安排下客观无法满足的程序要求，如实说明只能作为原则性约定，不强行修补。
+8. 用词精确：股东"推荐"董事（非"代表出任"）；"股权／表决权／出资比例（认缴、实缴）"严格区分；文件名称加书名号。
+
+── 五、本次装配的规则（${packs.map(SHORT).join("、")}，共 ${cs.length} 条）
+
+${ruleBlock()}
+
+${DOCPOINTS[st.doc] || DOCPOINTS.qt}
+
+── 六、确定性校验七查
+1 空格与勾选：所有下划线、【】、○ 逐个过；未填「请注意填写」；未勾「未勾选。」；未选项划"/"。
+2 数字与比例：注册资本大小写一致；各股东出资额之和＝注册资本；持股比例之和＝100%；与工商登记信息比对，不一致的批注提示是否已履行变更手续。
+3 交叉引用（**每件必查**）：能跑脚本的先用 scripts/xref/extract_index.py 提引用清单，
+  再逐处核对条号指向；条款增删后编号顺延。核完写明核了多少处、发现几处。
+4 文书自称：章程全文自称"本章程"，出现"本协议"→【修订】或批注确认。
+5 法规真伪与时效：引用法规是否真实存在、是否现行有效、条文号是否准确（《公司法》2023 修订后条文号变化）。
+6 文书内部自洽：正文设了机构或职务而附则定义未同步（或反之）；正文提到附件而未附；决议事项与授权范围是否对应。
+7 日期与期限：签署日、生效日、有效期、备案期限代入验算；"约定为长期"的营业期限提请确认。
+
+── 七、主体、权限与程序
+· 出具／签署主体名称与营业执照、上位文件逐字一致；分公司、分支机构等非法人主体只有负责人无法定代表人，落款相应调整。
+· 签署人是否有权代表，非法定代表人签署的要求附授权委托书（授权人、被授权人、事项、权限、期限、签章齐全）。
+· 用印：公章（函件、决议、章程），不得以部门章、财务章代替。
+· 是否履行相应内部程序：党委会前置研究（"三重一大"）、董事会／股东会审议、上级单位审批；未见程序痕迹的批注提示确认。
+· 国资事项识别：涉产权转让、增资、重大资产转让、担保、无偿划转的，按 32 号令及集团权限手册核对审批层级，程序未履行的提示"先批后签"。
+
+── 八、背景（经办人已提供的照抄，未提供的从文件中判读，判读不出的写"未知"）
+- 文书类型：${kind}
+- 我方角色：${st.role}
+- 经办人补充：${st.note.trim() || "（未提供）"}
+其余按背景卡自行判读并在输出第二项列明：是否有上位文件／相对方性质／是否涉国资监管事项／是否涉外部主体需资信核查／是否为对外出具文件／公司是否已完成相关工商变更登记／本文书是否需报上级批准后方可实施。
+
+── 九、输出格式（严格按此十六项）
+
+一、文书定性：类型 / 效力属性 / 我方角色 / 上位依据（一句话）
+二、背景卡与本次装配的要点包
+三、审查结论（可用印或可对外出具 / 修改后可用 / 存在重大风险需退回）
+四、程序与权限核查结果（内部决策程序、签署权限、国资审批层级）
+五、裸审发现（第一步产出，原样保留）
+六、落盘块（机器读；修订、删除、批注、新增条款、删段全部写在这一个块里，不再另列表格。格式见本节末尾「落盘块怎么写」，一字不得走样）
+七、依据与说理：按落盘块的序号逐条一行——序号 | 法律依据（法规名称＋条文号）| 说理。这一项写给审查报告用，不进 Word。
+八、落盘程序处理不了的：在表格内、图片内、页眉页脚、目录里，或需要整体重排、重新编号的问题——写明位置与建议处理方式，留给人工。
+九、确定性校验七查核对表（交叉引用一栏必须写「核了 X 处，发现 Y 处」；确无的写「无」）
+十、一致性核对表（主体名称／比例数字／交叉引用／与上位文件比对）
+十一、【清单外发现】必答，不得为空。确无的须写明你从哪三个以上非清单角度考虑过仍未发现问题。
+十二、【清单证伪】必答。上面这批规则与要点里，哪几条在本文书背景下不适用、或者照套会误导？逐条说明理由。
+十三、需经办部门确认事项（内部审批文件、其他股东意见、工商登记资料${(!st.law||!st.tyc)?"、以及本次因未接工具而留待核实的事项":""}）
+十四、无需处理事项（一行一项）
+十五、落盘执行说明（按下方口径固定输出）
+十六、收尾提醒（固定）：目录及页码未作修改，定稿后请更新目录；条款如有增删请同步更新编号与交叉引用。
+
+${LAND()}
+章程类条款编号顺延、交叉引用变更属正文修订，须逐处以修订形式落盘，不得整篇重排。
+
+── 待审文书
+【在此粘贴文书全文】`;
+}
+
+/* ═══════════ 落盘：两条路，都是同一套确定性代码 ═══════════ */
+function promptRedline(){
+  if (st.who === "ai") return `这一步交给 AI 跑 —— 同一套代码，只是没有界面。把下面这段发给它。
+
+用 contract-review-sop 技能把上一步报告第六项的落盘块落进来件。
+
+来件　　：${FILE()}
+署名　　：${SIGN()}
+时间线　：${TL()}
+交付名　：来件名 +「（修订稿）」，后缀与来件一致，存回来件所在文件夹
+
+一、先看来件情况，决定直落还是退回纯文字
+   python3 $S/oneshot.py --input "${FILE()}" --inspect --json -
+   命中任一条就别自己落，只交落盘块纯文字给我在落盘台上手落：
+   来件是 .doc 而本机没有 LibreOffice；过半段落长在表格里；用户说了只要文字。
+
+二、试跑（不写任何文件），把存疑条目一次列清
+   python3 $S/oneshot.py --input "${FILE()}" --block 落盘块.txt --auto --dry-run --json -
+   --auto 会自动把「落不了刀的修订」降级为批注、把高把握的候选自动指认。
+
+三、处理 needs_human 里剩下的
+   看候选段落 cands；拿不准就 python3 $S/oneshot.py --input "${FILE()}" --search "关键词" 查真实原文；
+   决定写进一个 patch 文件一次交回：{"7":{"src":"更短的原文"},"9":{"pick":{"para":132}},"11":{"skip":true}}
+   然后 --patch 决定.json 重跑（每次都从来件重新开始，不叠加）。最多三轮，仍拿不准的 skip 并列明。
+   自动降级写的批注是占位话术，用 patch 的 {"kind":"note","note":"…"} 换成正经口径。
+
+四、正式落盘
+   python3 $S/oneshot.py --input "${FILE()}" --block 落盘块.txt --auto --start "起点时刻" \\
+       --json 报告.json --emit-block 实际落盘块.txt
+   一个进程跑完：定位 → 落盘 → 署名与北京时间 → 打包 → C0–C7 体检 → 交付。
+   体检任一 FAIL 就不出文件，来件本身一个字没动；C2 或 C7 挂了不许硬发，改交纯文字给人工。
+
+五、交回来的时候说清楚
+   修订 X 处、批注 Y 条、时间线区间、体检全过；程序自动改过口径的（actions）逐条交代；
+   未落盘的逐条列明（是什么问题、为什么没落、建议怎么办）；
+   目录及页码未改，定稿后请更新目录域。报告写在对话里就行，不用另存文件。
+
+落不上的怎么办：报告第八项列的（表格内、图片内、页眉页脚、需重排的）本来就归人工；
+标「找不到」的多半是抄原文时抄漏了字，让它自己 --search 核对比重审一遍快得多。`;
+
+return `这一步不用 AI 了 —— 打开「落盘台」，把上一步报告里的落盘块粘进去。
+
+一、打开落盘台
+   在工具包的「落盘台」文件夹里双击 启动.command。
+   浏览器会自己开一个本地页面（127.0.0.1，只在这台机器上跑，文件不出本机）。
+   头一回双击如果被 macOS 拦了：右键 → 打开 → 再点「打开」。
+
+二、把这四样填进去
+   来件　　：${FILE()}　（点「选择文件…」，或直接把文件拖进去；.doc 也行，程序会转出转回）
+   署名　　：${SIGN()}
+   时间线　：${TL()}
+   交付名　：来件名 + 「（修订稿）」，后缀与来件一致，默认存回来件所在文件夹
+
+三、粘落盘块
+   把报告第六项 <<<落盘>>> 到 <<<落盘完>>> 整段贴进「落盘块」框，点「解析并定位」。
+   程序会逐条告诉你落在第几段：
+   · 命中　　→ 不用管；
+   · 请核对　→ 原文与来件对不上，程序按相似度定了位，点开看一眼预览；
+   · 要指认　→ 同样的文字全文出现多处，点候选里的「就是这一处」；
+   · 找不到　→ 搜关键词自己挂，或者点「跳过这一条」，留着人工改。
+
+   口径不对就地改：点开条目 →「改这一条」可以换类型（AI 写成修订、你想改成批注就选「批注」，
+   锚点会自动填上原文）、也可以补原文里抄漏的字，保存后立刻重新定位；
+   改完点「导出改过的落盘块」可以把改过的版本留档或贴回报告。
+
+四、先「试跑」，全绿了再「正式落盘」
+   正式落盘会跑完 C0–C7 体检：非正文部件逐字节没动、拒绝全部修订后的正文与来件逐字相同、
+   本次署名唯一、时间是北京钟面、批注都有锚点、来件既有的第三方痕迹一条没少。
+   任何一项 FAIL 就不出文件 —— 这时候来件本身一个字也没被动过，看日志改清单重跑即可。
+
+五、交付
+   交付文件在来件所在文件夹（或你指定的输出文件夹），运行日志在「落盘台/日志」里。
+   回复客户时说清楚：修订 X 处、批注 Y 条、时间线区间、目录未改需定稿后更新。
+
+落不上的怎么办：报告第八项列的（表格内、图片内、页眉页脚、需重排的）本来就归人工；
+落盘台里标「找不到」的，多半是 AI 抄原文时抄漏了字 —— 直接在落盘台里搜段落指认，比让 AI 重来一遍快得多。`;
+}
+
+/* ═══════════ 渲染 ═══════════ */
+function currentText(){
+  if (st.step === "redline") return promptRedline();
+  return st.mode === "k" ? promptContract() : promptDoc();
+}
+function render(){
+  const cs = activeCards(), packs = activePacks();
+  const txt = currentText();
+  $("out").textContent = txt;
+  $("cnt").textContent = txt.length.toLocaleString() + " 字";
+  $("onote").textContent = st.step === "review"
+    ? `一步生成 · 装配 ${cs.length} 条规则 · ${packs.map(SHORT).join(" · ")}`
+    : (st.step === "redline"
+        ? (st.who === "ai" ? "发给 AI —— 让它用同一套程序一次落完" : "不用发给 AI —— 这是落盘台的操作步骤")
+        : "按需：客户要书面意见时，落盘完成之后发这一段");
+  paintSrcline(); paintChangebar();
+  if (drawer.classList.contains("on")) paintList();
+}
+$("copy").onclick = async () => {
+  const t = $("out").textContent;
+  try { await navigator.clipboard.writeText(t); toast("已复制"); }
+  catch { const r=document.createRange(); r.selectNodeContents($("out"));
+    const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("已选中，按 Cmd/Ctrl+C"); }
+};
+let tt; function toast(m){ const el=$("toast"); el.textContent=m; el.classList.add("show");
+  clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("show"),2400); }
+
+/* ============ 抽屉 ============ */
+const drawer = $("drawer"), scrim = $("scrim");
+function openDrawer(){ drawer.classList.add("on"); scrim.classList.add("on"); paintList(); setTimeout(() => $("q").focus(), 260); }
+function closeDrawer(){ drawer.classList.remove("on"); scrim.classList.remove("on"); }
+$("openlib").onclick = openDrawer;
+$("dwclose").onclick = closeDrawer;
+scrim.onclick = closeDrawer;
+addEventListener("keydown", e => { if (e.key === "Escape" && drawer.classList.contains("on")) closeDrawer(); });
+document.querySelectorAll("[data-scope]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-scope]").forEach(x => x.setAttribute("aria-selected", x === b));
+  st.scope = b.dataset.scope; paintList();
+});
+$("q").oninput = e => { st.q = e.target.value.trim().toLowerCase(); paintList(); };
+
+let openEditor = null;
+
+/* ---- 全部视图：三大区 + 可折叠的包 ---- */
+const SECT = [["通用", k => k === "CORE"], ["按情形", k => /^S\d+$/.test(k)], ["按类型", k => /^T\d+$/.test(k)]];
+
+function filtered(){
+  const inScope = new Set(activePacks());
+  return cards().filter(c => {
+    if (st.scope === "on" && !inScope.has(c.pack)) return false;
+    if (st.q && !(c.id + c.t + (c.when||"") + c.sig + c.ask + (c.failReal||"") + (c.src||"")).toLowerCase().includes(st.q)) return false;
+    return true;
+  });
+}
+function paintList(){
+  const list = filtered(), host = $("dwbody");
+  if (!list.length){ host.innerHTML = `<div class="empty">没有匹配的规则。</div>`; return; }
+
+  let html = "";
+  if (st.scope === "on"){
+    let pack = null;
+    list.forEach(c => {
+      if (c.pack !== pack){ pack = c.pack; html += `<div class="grp">${esc(LBL(pack))}</div>`; }
+      html += cardHTML(c);
+    });
+  } else {
+    const byPack = {};
+    list.forEach(c => (byPack[c.pack] = byPack[c.pack] || []).push(c));
+    const seen = new Set();
+    SECT.forEach(([name, test]) => {
+      const keys = PACKS().map(p => p.k).filter(k => test(k) && byPack[k]);
+      if (!keys.length) return;
+      html += `<div class="sect">${esc(name)}</div>`;
+      keys.forEach(k => {
+        seen.add(k);
+        const open = st.q ? true : !!st.open[k];
+        html += `<div class="pgrp">
+          <button class="phd" data-pack="${esc(k)}" aria-expanded="${open}">
+            <span class="caret">▶</span><span class="pname">${esc(SHORT(k))}</span><span class="pn">${byPack[k].length}</span>
+          </button>
+          ${open ? `<div class="pbody">${byPack[k].map(cardHTML).join("")}</div>` : ``}
+        </div>`;
+      });
+    });
+    const rest = Object.keys(byPack).filter(k => !seen.has(k));
+    if (rest.length){
+      html += `<div class="sect">其他</div>`;
+      rest.forEach(k => {
+        const open = st.q ? true : !!st.open[k];
+        html += `<div class="pgrp">
+          <button class="phd" data-pack="${esc(k)}" aria-expanded="${open}">
+            <span class="caret">▶</span><span class="pname">${esc(SHORT(k))}</span><span class="pn">${byPack[k].length}</span>
+          </button>
+          ${open ? `<div class="pbody">${byPack[k].map(cardHTML).join("")}</div>` : ``}
+        </div>`;
+      });
+    }
+  }
+  html += `<div style="padding:26px 0 10px"><button class="btn quiet tiny" id="addnew">＋ 自己加一条</button></div>`;
+  host.innerHTML = html;
+
+  host.querySelectorAll("[data-pack]").forEach(b => b.onclick = () => { st.open[b.dataset.pack] = !st.open[b.dataset.pack]; paintList(); });
+  host.querySelectorAll("[data-more]").forEach(b => b.onclick = () => {
+    openEditor = openEditor === b.dataset.more ? null : b.dataset.more;
+    const c = cards().find(x => x.id === b.dataset.more);
+    if (c && st.scope === "all") st.open[c.pack] = true;
+    paintList();
+  });
+  const add = host.querySelector("#addnew"); if (add) add.onclick = addNew;
+  wireEditor(host);
+}
+function cardHTML(c){
+  const editing = openEditor === c.id;
+  return `<article class="card${c._off ? " off" : ""}">
+    <div class="c-hd">
+      <span class="cid">${esc(c.id)}</span>
+      <span class="c-t">${esc(c.t)}</span>
+      ${(c._edited || c._added || c._off) ? `<span class="dot" title="这条你改过"></span>` : ``}
+      <button class="more" data-more="${esc(c.id)}" aria-label="修改">···</button>
+    </div>
+    <div class="row"><span class="k">在合同里看到</span>${esc(c.sig)}</div>
+    <div class="row"><span class="k">怎么写批注</span>${esc(c.ask)}</div>
+    ${c.failReal ? `<div class="exc"><span class="k">例外</span>${esc(c.failReal)}</div>` : ``}
+    <div class="c-meta">${esc(c.act || "")}</div>
+    ${editing ? editorHTML(c) : ``}
+  </article>`;
+}
+function editorHTML(c){
+  return `<div class="edit" data-ed="${esc(c.id)}">
+    <label class="sw"><input type="checkbox" data-use ${c._off ? "" : "checked"}> 在提示词里使用这条</label>
+    <div><label>怎么写批注</label><textarea class="txt" data-ask rows="4">${esc(c.ask)}</textarea></div>
+    <div><label>例外——什么情况下不该按这条办</label><textarea class="txt" data-fail rows="3" placeholder="例：这类合同法院可能按专属管辖处理，硬改不如留着。">${esc(c.failReal || "")}</textarea></div>
+    <p class="goes">${WRITE_READY ? `保存后直接写进 <b>${esc(WRITE.name)}</b>` : `还没有你自己的规则库，这次改动先存在这台电脑上`}</p>
+    <div class="acts">
+      <button class="btn tiny" data-save>${WRITE_READY ? "保存到规则库" : "保存"}</button>
+      <button class="btn tiny quiet" data-cancel>取消</button>
+      ${(c._edited || c._off) ? `<button class="linkish" data-revert>恢复原文</button>` : ``}
+      <span style="flex:1"></span>
+      ${c._added ? `<button class="linkish" data-del>删除这条</button>` : ``}
+    </div>
+  </div>`;
+}
+function wireEditor(host){
+  const ed = host.querySelector("[data-ed]"); if (!ed) return;
+  const id = ed.dataset.ed;
+  ed.querySelector("[data-save]").onclick = async () => {
+    const use = ed.querySelector("[data-use]").checked;
+    const ask = ed.querySelector("[data-ask]").value.trim();
+    const fail = ed.querySelector("[data-fail]").value.trim();
+    const base = SRC.cards.find(c => c.id === id) || ov.add.find(c => c.id === id);
+    const title = (base && base.t) || id;
+    const what = [];
+    if (use === !!ov.off[id]) what.push(use ? "启用" : "停用");
+    if (base && ask !== base.ask) what.push("改了批注措辞");
+    if (base && fail !== (base.failReal || "")) what.push((base.failReal ? "改了例外" : "补了例外"));
+
+    if (use) delete ov.off[id]; else ov.off[id] = 1;
+    if (ov.add.some(c => c.id === id)){
+      const t = ov.add.find(c => c.id === id); t.ask = ask; t.failReal = fail; t.fail = fail;
+    } else {
+      const d = {};
+      if (ask !== base.ask) d.ask = ask;
+      if (fail !== (base.failReal || "")) { d.failReal = fail; d.fail = fail || "无。"; }
+      if (Object.keys(d).length) ov.edit[id] = d; else delete ov.edit[id];
+    }
+    save(); openEditor = null;
+
+    const line = `${id} ${title}：${what.length ? what.join("、") : "改动"}`;
+    if (WRITE_READY && await writeThrough(line)){
+      render(); toast(`已写进 ${WRITE.name || "rules.js"}`);
+    } else {
+      render(); toast("已存在这台电脑上");
+    }
+  };
+  ed.querySelector("[data-cancel]").onclick = () => { openEditor = null; paintList(); };
+  const rv = ed.querySelector("[data-revert]");
+  if (rv) rv.onclick = () => { delete ov.edit[id]; delete ov.off[id]; save(); openEditor = null; render(); };
+  const dl = ed.querySelector("[data-del]");
+  if (dl) dl.onclick = () => { ov.add = ov.add.filter(c => c.id !== id); delete ov.off[id]; save(); openEditor = null; render(); };
+}
+function addNew(){
+  let n = ov.add.length + 1, id;
+  const taken = new Set(cards().map(c => c.id));
+  do { id = "自建" + n++; } while (taken.has(id));
+  const pack = st.type || "CORE";
+  ov.add.push({ id, pack, t:"新规则", when:"", sig:"", ask:"", act:"【批注】", fail:"", failReal:"" });
+  save(); openEditor = id; st.open[pack] = true;
+  st.scope = "all";
+  document.querySelectorAll("[data-scope]").forEach(x => x.setAttribute("aria-selected", x.dataset.scope === "all"));
+  render();
+}
+
+/* ============ 规则库来源与挂载 ============ */
+function paintSrcline(){
+  const own = SRC.origin === "ext";
+  const bits = [`<span class="badge${own ? " ext" : ""}">${own ? "我的规则库" : (SRC.origin === "script" ? "同目录" : "自带")}</span>`,
+                esc(own ? SRC.label : "规则库 " + SRC.version)];
+  if (SRC.updated) bits.push("· " + esc(SRC.updated));
+  if (SRC.origin === "file") bits.push("· 只看一眼");
+  bits.push("· " + cards().length + " 条");
+  if (LIBS.length > 1) bits.push(`· 共 ${LIBS.length} 份`);
+  bits.push(WRITE_READY ? `· <span style="color:var(--accent)">保存直接写进它</span>` : "· 保存只存本机");
+  $("srctext").innerHTML = bits.join(" ");
+  const mh = $("mounthow");
+  if (mh) mh.innerHTML = window.__MOUNT_ERR
+    ? `同目录那份 rules.js 读出来有问题（${esc(window.__MOUNT_ERR)}），已经跳过它。`
+    : `临时打开一份规则库看看，不会改动你正在用的那份，关掉页面就恢复。`;
+  paintWritePanel();
+}
+
+function paintWritePanel(){
+  const how = $("writehow"), acts = $("writeacts");
+  if (!how || !acts) return;
+  if (!FS_OK){
+    how.textContent = "这个浏览器不能让网页直接写文件（Chrome、Edge 可以）。改动会存在这台电脑上，可以用下面的「另存一个版本」导出，自己保存。";
+    acts.innerHTML = "";
+  } else if (WRITE_READY){
+    how.innerHTML = `正在用 <b>${esc(WRITE.name)}</b>。在规则上点保存，直接写进这个文件。`;
+    acts.innerHTML = `<button class="btn tiny quiet" id="wnew">另存一个新的</button>` +
+                     `<button class="btn tiny quiet" id="wpick">打开别的规则库</button>` +
+                     ``;
+  } else if (WRITE){
+    how.innerHTML = `记住了 <b>${esc(WRITE.name)}</b>，浏览器需要你再确认一次写入权限。`;
+    acts.innerHTML = `<button class="btn tiny" id="wgrant">恢复写入权限</button>`;
+  } else {
+    how.innerHTML = SRC.origin === "script"
+      ? `正在用同目录的 rules.js，但网页还不能写它。存成你自己的规则库之后，改动就能直接写进去。`
+      : `还没有你自己的规则库，用的是这份文件自带的 ${BUILTIN.cards.length} 条。第一次改规则时会提示你存一份。`;
+    acts.innerHTML = `<button class="btn tiny" id="wnew">存成我的规则库</button>` +
+                     `<button class="btn tiny quiet" id="wpick">打开已有的规则库</button>` +
+                     ``;
+  }
+  const bind = (id, fn) => { const x = $(id); if (x) x.onclick = fn; };
+  bind("wnew", createNewFile); bind("wpick", connectExisting); 
+  bind("wgrant", async () => {
+    if (await perm(WRITE, true)){ WRITE_READY = true; await rememberHandle(WRITE); await flushLocal(); render(); toast("已连上，改动会直接写进文件"); }
+    else toast("没拿到写入权限");
+  });
+  paintLibList();
+}
+
+function paintLibList(){
+  const host = $("liblist"); if (!host) return;
+  if (LIBS.length < 2){ host.innerHTML = ""; host.style.display = "none"; return; }
+  host.style.display = "block";
+  const cur = SRC.label;
+  host.innerHTML = `<h3>这台电脑上找到 ${LIBS.length} 份规则库</h3>` +
+    `<p style="margin:0 0 8px">默认用最新的那份。要用别的，点一下。</p>` +
+    LIBS.map((it, i) => {
+      const on = it.name === cur;
+      return `<button class="libitem${on ? " on" : ""}" data-lib="${i}">
+        <span class="libdot">${on ? "●" : "○"}</span>
+        <span class="libname">${esc(it.name)}</span>
+        <span class="libmeta">${esc(it.lib.version || "")} · ${esc(it.ts || "")} · ${it.count} 条${i === 0 ? " · 最新" : ""}</span>
+      </button>`;
+    }).join("");
+  host.querySelectorAll("[data-lib]").forEach(bt => bt.onclick = async () => {
+    const it = LIBS[+bt.dataset.lib];
+    if (it.handle && !(await perm(it.handle, true))) return toast("没拿到这个文件的权限");
+    await useLib(it, true);
+    st.type = ""; st.situ.clear(); st.open = {};
+    paintLeft(); render();
+    toast("已切到 " + it.name);
+  });
+}
+
+async function flushLocal(){
+  if (!WRITE_READY) return;
+  const n = nChanges();
+  await writeThrough(n ? `把这台电脑上的 ${n} 处改动写入` : "开始使用这个文件");
+}
+async function connectExisting(){
+  try {
+    const [h] = await window.showOpenFilePicker({ multiple:false,
+      types:[{ description:"规则库", accept:{ "text/javascript":[".js"], "application/json":[".json"] } }] });
+    if (!h) return;
+    if (!(await perm(h, true))) return toast("没拿到写入权限");
+    const it = await readLib(h);
+    if (!it) return toast("这个文件读不出规则，换一个试试");
+    await rememberHandle(h);
+    await useLib(it, true); await discover();
+    st.type = ""; st.situ.clear(); st.open = {};
+    paintLeft();
+    await flushLocal(); render();
+    toast(`已打开 ${h.name}，往后保存直接写进它`);
+  } catch(err){ if (err && err.name !== "AbortError") toast("打不开：" + (err.message || err.name)); }
+}
+async function createNewFile(){
+  const s = stampNow();
+  try {
+    const h = await window.showSaveFilePicker({ suggestedName:`rules-${s.file}.js`,
+      types:[{ description:"规则库", accept:{ "text/javascript":[".js"] } }] });
+    if (!h) return;
+    if (!(await perm(h, true))) return toast("没拿到写入权限");
+    WRITE = h; WRITE_READY = true;
+    await rememberHandle(h);
+    const okw = await writeThrough("新建规则库");
+    await idbPut("activeLib", h.name);
+    render();
+    toast(okw ? `已存成 ${h.name}（${cards().length} 条）。往后在规则上点保存，都会写进这个文件。` : "文件没写成功");
+  } catch(err){ if (err && err.name !== "AbortError") toast("存不了：" + (err.message || err.name)); }
+}
+$("togglemount").onclick = () => {
+  const p = $("mountpanel");
+  p.style.display = p.style.display === "none" ? "grid" : "none";
+  $("togglemount").textContent = p.style.display === "none" ? "管理规则库" : "收起";
+};
+function mountObj(obj, origin, label){
+  adoptSource(obj, origin, label);
+  if (SRC.schema !== SCHEMA) toast(`这份规则库标的 schema 是 ${SRC.schema}，本页按 ${SCHEMA} 读，可能有字段对不上`);
+  st.type = ""; st.situ.clear();  st.open = {};
+  paintLeft(); render();
+bootLibs().then(() => render());
+}
+$("pickbtn").onclick = () => $("pickfile").click();
+$("pickfile").onchange = e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { try { mountObj(parseRuleFile(r.result), "file", f.name); toast("已挂上 " + f.name); }
+                     catch(err){ toast("读不了：" + err.message); } };
+  r.onerror = () => toast("文件读取失败");
+  r.readAsText(f, "utf-8");
+};
+function bakedLibrary(opt){
+  opt = opt || {};
+  const merged = cards().filter(c => !c._off).map(c => {
+    const o = {}; ["id","pack","t","when","sig","ask","act","fail","failReal"].forEach(k => { if (c[k] !== undefined) o[k] = c[k]; });
+    return o;
+  });
+  const s = stampNow(), today = s.day;
+  const log = Array.isArray(SRC.log) ? SRC.log.slice() : [];
+  if (opt.log) log.push({ d: today, t: opt.log });
+  const lib = {
+    schema: SCHEMA,
+    version: opt.keepVersion ? SRC.version : ($("vname").value.trim() || bumpVersion(SRC.version)),
+    updated: today,
+    ts: s.text,
+    note: opt.keepVersion ? (SRC.note || "") : $("vnote").value.trim(),
+    packs: PACKS(),
+    log: log.slice(-60),
+    cards: merged
+  };
+  if (!opt.keepVersion) lib.from = SRC.version;
+  if (SRC.roles) lib.roles = SRC.roles;
+  return lib;
+}
+function bumpVersion(v){
+  const m = String(v).match(/^v?(\d+)\.(\d+)$/);
+  return m ? `v${m[1]}.${+m[2] + 1}` : "v1.1";
+}
+async function offerFile(jsText, jsonText, lib){
+  const ok = () => toast(`已导出 ${lib.version}（${lib.cards.length} 条）。放到本页同一个文件夹里，刷新即可生效。`);
+
+  // 1) 本地 Chrome：直接另存，可以覆盖同目录那份 rules.js
+  if (window.showSaveFilePicker){
+    try {
+      const h = await window.showSaveFilePicker({ suggestedName: "rules.js",
+        types: [{ description: "规则库", accept: { "text/javascript": [".js"] } }] });
+      const w = await h.createWritable(); await w.write(jsText); await w.close();
+      ok(); return;
+    } catch(err){ if (err && err.name === "AbortError") return; }
+  }
+
+  // 2) 网页版：走 Artifact 的下载能力（只收 .json，不收 .js）
+  if (window.claude && typeof window.claude.use === "function"){
+    try {
+      const d = await window.claude.use("downloads");
+      if (d){
+        await d.save({ filename: "rules.json", data: jsonText });
+        toast(`已导出 ${lib.version}（${lib.cards.length} 条），存成了 rules.json。用上面的「选择文件」可以直接读它；想让它自动挂上，把文件改名 rules.js 并在开头加一行 window.HTZPT_RULES =`);
+        return;
+      }
+    } catch(err){ if (err && err.code === "declined") return; }
+  }
+
+  // 3) 普通下载
+  try {
+    const a2 = document.createElement("a");
+    a2.href = URL.createObjectURL(new Blob([jsText], { type:"text/javascript" }));
+    a2.download = "rules.js"; document.body.appendChild(a2); a2.click(); a2.remove();
+    setTimeout(() => URL.revokeObjectURL(a2.href), 4000);
+    ok(); return;
+  } catch(err){}
+
+  // 4) 都不行就给剪贴板
+  try { await navigator.clipboard.writeText(jsText); toast("这个环境不让存文件，规则库全文已复制到剪贴板，粘进 rules.js 保存即可。"); }
+  catch { toast("这个环境既不能存文件也不能写剪贴板，请把本页另存到本地再导出。"); }
+}
+$("exportbtn").onclick = async () => {
+  const lib = bakedLibrary();
+  const jsonText = JSON.stringify(lib, null, 1);
+  await offerFile("window.HTZPT_RULES = " + jsonText + ";\n", jsonText, lib);
+};
+
+/* ============ 改动 ============ */
+function paintChangebar(){
+  const n = nChanges(), bar = $("statebar");
+  if (!n){ bar.style.display = "none"; return; }
+  bar.style.display = "flex"; bar.classList.add("warn");
+  const first = !LIBS.some(x => x.handle);
+  $("statetext").textContent = !FS_OK
+    ? `这台电脑上改了 ${n} 条。这个浏览器不能让网页直接写文件，可以在「管理规则库」里另存一份带走。`
+    : (first ? `你改了 ${n} 条，现在还只存在这台电脑的浏览器里。存成你自己的规则库，往后每次修改都会直接写进那个文件。`
+             : `你改了 ${n} 条，还没写进规则库文件。`);
+  const btn = !FS_OK ? "" : (first ? `<button class="btn tiny" id="sb-new">存成规则库文件</button>` : `<button class="btn tiny" id="sb-conn">打开规则库写进去</button>`);
+  $("stateacts").innerHTML = btn +
+    `<button class="btn tiny quiet" id="copychg2">复制改动</button>` +
+    `<button class="btn tiny quiet" id="resetchg2">还原</button>`;
+  const c = $("sb-conn"); if (c) c.onclick = connectExisting;
+  const nw = $("sb-new");  if (nw) nw.onclick = createNewFile;
+  $("copychg2").onclick = copyChanges;
+  $("resetchg2").onclick = resetChanges;
+}
+function resetChanges(){
+  if (!confirm("把这台电脑上的全部改动还原？")) return;
+  ov = { off:{}, edit:{}, add:[] }; save(); openEditor = null; render(); toast("已还原");
+}
+async function copyChanges(){
+  const d = new Date(), pad = x => String(x).padStart(2, "0");
+  const L = [`规则卡改动 · ${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} · 基于规则库 ${SRC.version}`,
+             `（把这段存成 rules.js 放在本页同目录，或用 assemble.py --rules 指过来）`, ""];
+  const off = Object.keys(ov.off).filter(id => !ov.add.some(c => c.id === id));
+  if (off.length){
+    L.push(`停用 ${off.length} 条`);
+    off.forEach(id => { const b = SRC.cards.find(c => c.id === id); L.push(`  ${id} ${b ? b.t : ""}`); });
+    L.push("");
+  }
+  const eids = Object.keys(ov.edit);
+  if (eids.length){
+    L.push(`改写 ${eids.length} 条`);
+    eids.forEach(id => {
+      const b = SRC.cards.find(c => c.id === id); if (!b) return;
+      const e = ov.edit[id];
+      L.push(`  ${id} ${b.t}`);
+      if (e.ask !== undefined){ L.push(`    怎么写批注（原）：${b.ask}`); L.push(`    怎么写批注（改为）：${e.ask}`); }
+      if (e.failReal !== undefined){ L.push(`    例外（原）：${b.failReal || "（无）"}`); L.push(`    例外（改为）：${e.failReal || "（删除）"}`); }
+    });
+    L.push("");
+  }
+  if (ov.add.length){
+    L.push(`新增 ${ov.add.length} 条`);
+    ov.add.forEach(c => {
+      L.push(`  ${c.id} ${c.t} ｜ 归入 ${SHORT(c.pack)}`);
+      if (c.sig) L.push(`    在合同里看到：${c.sig}`);
+      L.push(`    怎么写批注：${c.ask}`);
+      if (c.failReal) L.push(`    例外：${c.failReal}`);
+    });
+    L.push("");
+  }
+  const t = L.join("\n").trim();
+  try { await navigator.clipboard.writeText(t); toast("改动已复制"); }
+  catch { alert(t); }
+}
+
+/* ============ 启动 ============ */
+paintLeft(); render();
+bootLibs().then(() => { paintLeft(); render(); });
+
+</script>
+</body>
+</html>

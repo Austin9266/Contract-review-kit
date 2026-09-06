@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>落盘台</title>
+<style>
+:root{
+  --paper:#F4F4F2; --surface:#FFFFFF; --surface2:#FAFAF9; --sunk:#EFEFEC;
+  --ink:#191B1A; --ink2:#3E4443; --muted:#616867; --faint:#8C9391;
+  --line:#E0E0DC; --line2:#ECECE8;
+  --accent:#1F4E5F; --accent-soft:#E5EDF0; --on-accent:#FFFFFF;
+  --ok:#2F6B4F; --warn:#8A5A24; --bad:#93341F;
+  --ok-soft:#E7F0EA; --warn-soft:#F5EDE2; --bad-soft:#F6E7E2;
+  --shadow:0 1px 2px rgba(25,27,26,.04),0 10px 28px -22px rgba(25,27,26,.4);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0F1213; --surface:#161A1B; --surface2:#1A1F20; --sunk:#121617;
+  --ink:#E7E9E9; --ink2:#C1C7C7; --muted:#939B9A; --faint:#6B7473;
+  --line:#272D2E; --line2:#202526;
+  --accent:#63AEC4; --accent-soft:#142C36; --on-accent:#0A1113;
+  --ok:#79C79B; --warn:#C99247; --bad:#DC8A72;
+  --ok-soft:#14261D; --warn-soft:#2A2115; --bad-soft:#2B1A15;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -22px rgba(0,0,0,.9);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Songti SC","SimSun",Georgia,serif;font-weight:700;margin:0}
+button{font:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.wrap{max-width:1340px;margin:0 auto;padding:0 24px 48px}
+.mast{display:flex;align-items:baseline;gap:14px;padding:24px 0 16px;flex-wrap:wrap}
+.mast h1{font-size:24px;letter-spacing:-.01em}
+.mast .sub{color:var(--faint);font-size:12.5px}
+.mast .spacer{flex:1}
+.bench{display:grid;grid-template-columns:minmax(300px,340px) 1fr;gap:22px;align-items:start}
+@media(max-width:1000px){.bench{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:9px;box-shadow:var(--shadow);overflow:hidden}
+.rail{position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto}
+@media(max-width:1000px){.rail{position:static;max-height:none}}
+.sec{padding:15px 18px;border-bottom:1px solid var(--line2)}
+.sec:last-child{border-bottom:0}
+.sec>.lbl{font-size:11px;letter-spacing:.09em;color:var(--faint);font-weight:700;display:block;margin-bottom:9px}
+.txt{width:100%;border:1px solid var(--line);background:var(--surface2);color:var(--ink);
+  border-radius:6px;padding:7px 10px;font:inherit;font-size:13px}
+.txt::placeholder{color:var(--faint)}
+textarea.txt{line-height:1.7;resize:vertical;font-size:13px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.hint{font-size:11.5px;color:var(--faint);margin:6px 0 0;line-height:1.6}
+.ck{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2)}
+.ck input{width:15px;height:15px;accent-color:var(--accent)}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);
+  padding:6px 15px;border-radius:6px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.quiet{background:var(--surface);color:var(--accent);border-color:var(--line)}
+.btn.quiet:hover:not(:disabled){border-color:var(--accent)}
+.btn.tiny{padding:2px 10px;font-size:12px;border-radius:5px}
+.drop{border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;
+  background:var(--surface2);color:var(--muted);font-size:12.5px;transition:.15s}
+.drop.on{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.file{font-size:13px;color:var(--ink);word-break:break-all;line-height:1.55}
+.file .meta{font-size:11.5px;color:var(--faint)}
+.tabs{display:flex;padding:0 20px;border-bottom:1px solid var(--line2);background:var(--surface2);gap:22px}
+.tab{border:0;background:none;color:var(--muted);padding:13px 0 11px;font-size:13.5px;
+  border-bottom:2px solid transparent;position:relative;top:1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:700}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 20px;flex-wrap:wrap;border-bottom:1px solid var(--line2)}
+.bar .note{font-size:12.5px;color:var(--muted)}
+.bar .rt{display:flex;align-items:center;gap:9px}
+.pad{padding:16px 20px}
+.tally{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.tally b{font-variant-numeric:tabular-nums;color:var(--ink)}
+.rows{border-top:1px solid var(--line2)}
+.row{border-bottom:1px solid var(--line2)}
+.rowhead{display:grid;grid-template-columns:14px 78px 1fr auto;gap:11px;align-items:baseline;
+  padding:10px 20px;cursor:pointer}
+.rowhead:hover{background:var(--surface2)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);margin-top:7px}
+.s-ok .dot{background:var(--ok)} .s-check .dot{background:var(--warn)}
+.s-ask .dot{background:var(--warn)} .s-miss .dot{background:var(--bad)}
+.s-bad .dot{background:var(--bad)} .s-skip .dot{background:var(--line)}
+.tag{font-size:12px;color:var(--muted);white-space:nowrap}
+.tag b{color:var(--ink)}
+.gist{font-size:13px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.state{font-size:11.5px;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.s-ok .state{background:var(--ok-soft);color:var(--ok)}
+.s-check .state,.s-ask .state{background:var(--warn-soft);color:var(--warn)}
+.s-miss .state,.s-bad .state{background:var(--bad-soft);color:var(--bad)}
+.s-skip .state{background:var(--sunk);color:var(--faint)}
+.row.skipd .gist,.row.skipd .tag{opacity:.45;text-decoration:line-through}
+.body{padding:2px 20px 16px 43px;background:var(--surface2);border-top:1px solid var(--line2)}
+.msg{font-size:12.5px;color:var(--warn);margin:10px 0 6px}
+.prev{background:var(--surface);border:1px solid var(--line2);border-radius:7px;padding:11px 13px;
+  font-size:13px;line-height:1.85;color:var(--ink2);margin:8px 0}
+.prev .old{color:var(--bad);text-decoration:line-through}
+.prev .new{color:var(--ok);border-bottom:1px solid var(--ok)}
+.prev .noteb{background:var(--warn-soft);color:var(--warn);border-radius:4px;padding:0 3px}
+.prev .cap{font-size:11px;color:var(--faint);display:block;margin-bottom:4px;letter-spacing:.06em}
+.cand{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+  border:1px solid var(--line2);border-radius:6px;padding:8px 10px;margin:6px 0;background:var(--surface)}
+.cand .t{font-size:12.5px;color:var(--ink2);line-height:1.6}
+.cand .t i{font-style:normal;color:var(--faint);font-size:11px;margin-right:6px}
+.cand mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 2px}
+.acts{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.uid{color:var(--faint);font-size:11px;margin-left:6px;font-variant-numeric:tabular-nums}
+.editor{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:12px 13px;margin:8px 0}
+.editor .erow{display:flex;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.editor .erow select.txt{max-width:110px}
+.fl{display:block;font-size:11.5px;color:var(--faint);margin-bottom:9px;letter-spacing:.04em}
+.fl .txt{margin-top:4px;font-size:13px}
+.pill{font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px;margin-left:6px}
+pre.log{margin:0;padding:16px 20px;white-space:pre-wrap;word-break:break-word;background:var(--sunk);
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.8;color:var(--ink2);
+  max-height:62vh;overflow:auto}
+pre.log b{color:var(--ok)} pre.log u{color:var(--bad);text-decoration:none}
+.foot{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 20px;
+  border-top:1px solid var(--line2);background:var(--surface2);flex-wrap:wrap}
+.deliver{border:1px solid var(--ok);background:var(--ok-soft);border-radius:8px;padding:12px 14px;
+  margin:14px 20px;font-size:13px;color:var(--ink)}
+.err{border:1px solid var(--bad);background:var(--bad-soft);border-radius:8px;padding:12px 14px;
+  margin:14px 20px;font-size:13px;color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);
+  background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:7px;font-size:13px;
+  opacity:0;pointer-events:none;transition:.18s;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);
+  border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mast">
+    <h1>落盘台</h1>
+    <span class="sub">把审查报告里的落盘块，落成 Word 修订与批注</span>
+    <span class="spacer"></span>
+    <button class="btn quiet tiny" id="quit">退出</button>
+  </div>
+
+  <div class="bench">
+    <!-- ─── 左栏：设置 ─── -->
+    <aside class="panel rail">
+      <div class="sec">
+        <span class="lbl">来件</span>
+        <div class="drop" id="drop">
+          <button class="btn quiet tiny" id="pick">选择文件…</button>
+          <div style="margin-top:7px">或把 .doc / .docx 拖到这里</div>
+        </div>
+        <div id="fileinfo" style="margin-top:10px"></div>
+      </div>
+      <div class="sec">
+        <span class="lbl">署名</span>
+        <input class="txt" id="author" placeholder="署名（取自 配置.json）" style="margin-bottom:7px">
+        <input class="txt" id="initials" placeholder="缩写">
+        <p class="hint">本次新增的修订与批注全用这一个作者；来件里别人的痕迹一个字都不动。</p>
+      </div>
+      <div class="sec">
+        <span class="lbl">时间线（北京时间）</span>
+        <div class="two">
+          <input class="txt" id="t1" placeholder="起 如 2026-03-02T09:20">
+          <input class="txt" id="t2" placeholder="止（可空）">
+        </div>
+        <input class="txt" id="windows" placeholder="工作时段（取自 配置.json）" style="margin-top:7px">
+        <label class="ck" style="margin-top:8px"><input type="checkbox" id="weekend"> 允许落在周末</label>
+        <p class="hint">起点填「客户把文件发给你的那一刻」。写进文件的是北京时间的钟面值，不折算 UTC。</p>
+      </div>
+      <div class="sec">
+        <span class="lbl">交付</span>
+        <input class="txt" id="oname" placeholder="文件名（不含后缀）">
+        <input class="txt" id="odir" placeholder="输出文件夹（留空＝来件所在文件夹）" style="margin-top:7px">
+        <p class="hint">后缀与来件一致。来件是 .doc 就交 .doc，另留一份 docx 备查。</p>
+      </div>
+    </aside>
+
+    <!-- ─── 右栏：正事 ─── -->
+    <section class="panel">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-p="paste">落盘块</button>
+        <button class="tab" role="tab" aria-selected="false" data-p="list">清单 <span id="cnt"></span></button>
+        <button class="tab" role="tab" aria-selected="false" data-p="log">运行日志</button>
+      </div>
+
+      <div id="p-paste">
+        <div class="bar">
+          <span class="note">把审查报告末尾 <code>&lt;&lt;&lt;落盘&gt;&gt;&gt;</code> 到 <code>&lt;&lt;&lt;落盘完&gt;&gt;&gt;</code> 整段粘进来</span>
+          <span class="rt"><button class="btn quiet" id="export">导出改过的落盘块</button>
+                    <button class="btn" id="parse">解析并定位</button></span>
+        </div>
+        <div class="pad">
+          <textarea class="txt" id="ai" rows="18" placeholder="&lt;&lt;&lt;落盘&gt;&gt;&gt;
+@修订 1 | 第7.2条
+原文：甲方应在收到发票后15日内付款
+改为：甲方应在收到发票且经审核无误后30日内付款
+理由：付款起算点不明确
+
+@批注 2 | 第7.2条
+锚点：甲方应在收到发票后15日内付款
+批注：请确认审核时限。
+&lt;&lt;&lt;落盘完&gt;&gt;&gt;"></textarea>
+          <p class="hint" id="warns"></p>
+        </div>
+      </div>
+
+      <div id="p-list" hidden>
+        <div class="bar">
+          <span class="tally" id="tally"></span>
+          <span class="rt">
+            <label class="ck"><input type="checkbox" id="onlybad"> 只看要处理的</label>
+          </span>
+        </div>
+        <div class="rows" id="rows"></div>
+      </div>
+
+      <div id="p-log" hidden>
+        <div class="bar"><span class="note" id="logstate">还没跑过。</span>
+          <span class="rt"><button class="btn quiet tiny" id="reveal" disabled>在访达中显示</button></span></div>
+        <div id="result"></div>
+        <pre class="log" id="log">（这里显示每一步的实际输出，包括 C0–C7 体检结果。）</pre>
+      </div>
+
+      <div class="foot">
+        <span class="note" id="footnote">先选来件，再粘落盘块。</span>
+        <span class="rt">
+          <button class="btn quiet" id="dry" disabled>试跑（不写文件）</button>
+          <button class="btn" id="go" disabled>正式落盘</button>
+        </span>
+      </div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => (s||"").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+let ST = {file:null, items:[], stats:null, open:new Set(), running:false};
+
+async function api(path, body){
+  const r = await fetch(path, {method:"POST", headers:{"Content-Type":"application/json"},
+                               body: JSON.stringify(body||{})});
+  const j = await r.json();
+  if (j.error) { toast(j.error); }
+  return j;
+}
+let tt; function toast(m){ const el=$("#toast"); el.textContent=m; el.classList.add("show");
+  clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("show"), 4200); }
+
+/* ── 页签 ── */
+document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x===b));
+  ["paste","list","log"].forEach(p => $("#p-"+p).hidden = (p !== b.dataset.p));
+});
+const goTab = p => document.querySelector('.tab[data-p="'+p+'"]').click();
+
+/* ── 来件 ── */
+$("#pick").onclick = async () => { const j = await api("/api/pick"); if (j.path) setFile(j); };
+const drop = $("#drop");
+["dragenter","dragover"].forEach(e => drop.addEventListener(e, ev => {
+  ev.preventDefault(); drop.classList.add("on"); }));
+["dragleave","drop"].forEach(e => drop.addEventListener(e, ev => {
+  ev.preventDefault(); drop.classList.remove("on"); }));
+drop.addEventListener("drop", async ev => {
+  const f = ev.dataTransfer.files[0]; if (!f) return;
+  toast("正在读取 " + f.name + "…");
+  const b64 = await new Promise(res => { const r = new FileReader();
+    r.onload = () => res(r.result); r.readAsDataURL(f); });
+  const j = await api("/api/upload", {name:f.name, b64});
+  if (j.path) setFile(j);
+});
+function setFile(j){
+  ST.file = j;
+  $("#fileinfo").innerHTML = '<div class="file">' + esc(j.name) +
+    '<div class="meta">' + esc(j.dir) + '<br>' + j.paras + ' 段 · 约 ' + j.words + ' 字</div></div>';
+  if (!$("#oname").value) $("#oname").value = j.stem + "（修订稿）";
+  if (!$("#t1").value){ const d=new Date(); const p=n=>String(n).padStart(2,"0");
+    $("#t1").value = d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes()); }
+  if (j.items){ ST.items=j.items; ST.stats=j.stats; renderList(); }
+  syncFoot();
+  toast("来件已就绪：" + j.name);
+}
+
+/* ── 解析 ── */
+$("#parse").onclick = async () => {
+  if (!ST.file) return toast("先选来件——定位要对着来件做。");
+  const j = await api("/api/parse", {text: $("#ai").value});
+  if (!j.items) return;
+  ST.items = j.items; ST.stats = j.stats; ST.open.clear(); EDIT = null; HITS = {};
+  $("#warns").textContent = (j.warns||[]).join("　");
+  renderList(); goTab("list"); syncFoot();
+};
+
+/* ── 清单 ── */
+const LAB = {ok:"命中", check:"请核对", ask:"要指认", miss:"找不到", bad:"格式有问题"};
+const KINDS = [["edit","修订"],["del","删除"],["delpara","删段"],["insert","新增"],["note","批注"]];
+const FIELDS = {
+  edit:    [["src","原文（来件里逐字照抄的一小段）",3],["dst","改为（改完之后那一小段的完整文字）",3]],
+  del:     [["src","原文（要整串删掉的那几个字）",3]],
+  delpara: [["anchor","锚点（要删掉的那一段里的任一句原文）",3]],
+  insert:  [["anchor","锚点（新段插在这一段之后）",2],["body","正文（多段就分行写）",4]],
+  note:    [["anchor","锚点（留空＝批注挂在整段上）",3],["note","批注文字（≤40 字，直接进 Word）",2]],
+};
+let EDIT = null, DRAFT = {}, HITS = {};
+
+function needFix(it){ return ["ask","miss","bad","check"].includes(it.status) && !it.skip; }
+
+function renderList(){
+  const only = $("#onlybad").checked;
+  const list = ST.items.filter(it => !only || needFix(it) || ST.open.has(it.uid) || EDIT === it.uid);
+  $("#cnt").textContent = ST.items.length ? "· " + ST.items.length : "";
+  const s = ST.stats || {};
+  $("#tally").innerHTML =
+    '<span>可落盘 <b>' + ((s.ok||0)+(s.check||0)) + '</b></span>' +
+    '<span>要指认 <b>' + (s.ask||0) + '</b></span>' +
+    '<span>找不到 <b>' + (s.miss||0) + '</b></span>' +
+    '<span>格式有问题 <b>' + (s.bad||0) + '</b></span>' +
+    '<span>跳过 <b>' + (s.skip||0) + '</b></span>' +
+    '<span style="color:var(--faint)">将写入修订 ' + (s.edits||0) + ' 处、批注 ' + (s.notes||0) + ' 条</span>';
+  $("#rows").innerHTML = list.map(rowHTML).join("") ||
+    '<div class="pad" style="color:var(--faint);font-size:13px">没有条目。</div>';
+}
+
+function rowHTML(it){
+  const cls = it.skip ? "s-skip" : "s-" + it.status;
+  const editing = EDIT === it.uid;
+  const open = ST.open.has(it.uid) || editing;
+  let body = "";
+  if (open){
+    body = '<div class="body">';
+    if (editing){
+      body += editorHTML(it);
+    } else {
+      if (it.msg) body += '<div class="msg">' + esc(it.msg) + '</div>';
+      if (it.why) body += '<p class="hint">理由：' + esc(it.why) + '</p>';
+      if (it.preview) body += prevHTML(it.preview);
+      if (it.cands && it.cands.length && ["ask","miss","check"].includes(it.status)){
+        body += '<p class="hint" style="margin-top:10px">最像的几处，点一下就按它算：</p>';
+        body += it.cands.map((c,i) =>
+          '<div class="cand"><div class="t"><i>第 ' + c.para + ' 段 · ' + Math.round(c.score*100) + '%</i>' +
+          esc(c.text) + '</div><button class="btn quiet tiny" data-act="cand" data-i="' + i + '">就是这一处</button></div>').join("");
+      }
+      if (["ask","miss","bad"].includes(it.status) || HITS[it.uid]){
+        body += '<div class="acts"><input class="txt" data-q placeholder="按关键词搜来件段落…" style="max-width:260px" value="' +
+                esc(HITS[it.uid] ? HITS[it.uid].q : "") + '">' +
+                '<button class="btn quiet tiny" data-act="search">搜</button></div>';
+        body += '<div>' + ((HITS[it.uid] && HITS[it.uid].paras) || []).map(p =>
+          '<div class="cand"><div class="t"><i>第 ' + p.i + ' 段</i>' + esc(p.text) + '</div>' +
+          '<button class="btn quiet tiny" data-act="para" data-para="' + p.i + '">挂在这一段</button></div>').join("") +
+          (HITS[it.uid] && !(HITS[it.uid].paras||[]).length ? '<p class="hint">没搜到。</p>' : "") + '</div>';
+      }
+      body += '<div class="acts">' +
+        '<button class="btn quiet tiny" data-act="edit">改这一条</button>' +
+        (it.kind !== "note" ? '<button class="btn quiet tiny" data-act="tonote">改成批注</button>' : "") +
+        '<button class="btn quiet tiny" data-act="skip">' + (it.skip ? "恢复这一条" : "跳过这一条") + '</button>' +
+        (it.para >= 0 ? '<span class="hint">落在第 ' + it.para + ' 段</span>' : "") + '</div>';
+    }
+    body += '</div>';
+  }
+  return '<div class="row ' + cls + (it.skip ? " skipd" : "") + '" id="r-' + it.uid + '" data-uid="' + it.uid + '">' +
+    '<div class="rowhead"><span class="dot"></span>' +
+    '<span class="tag"><b>' + esc(it.label + it.no) + '</b><span class="uid">#' + it.uid + '</span></span>' +
+    '<span class="gist">' + esc(it.loc ? it.loc + "　" : "") + esc(it.summary) + '</span>' +
+    '<span class="state">' + (it.skip ? "跳过" : LAB[it.status] || it.status) + '</span></div>' +
+    body + '</div>';
+}
+
+function editorHTML(it){
+  const d = DRAFT;
+  const opts = KINDS.map(([k,l]) => '<option value="' + k + '"' + (d.kind===k?" selected":"") + '>' + l + '</option>').join("");
+  const fs = (FIELDS[d.kind] || []).map(([k,label,rows]) =>
+    '<label class="fl">' + label + '<textarea class="txt" data-f="' + k + '" rows="' + rows + '">' + esc(d[k]||"") + '</textarea></label>').join("");
+  return '<div class="editor">' +
+    '<div class="erow"><select class="txt" data-kind>' + opts + '</select>' +
+    '<input class="txt" data-f="loc" placeholder="条款位置，如 第7.2条" value="' + esc(d.loc||"") + '" style="flex:1;min-width:120px">' +
+    '<input class="txt" data-f="occ" placeholder="第几处" value="' + esc(d.occ && d.occ!=="0" ? d.occ : "") + '" style="max-width:88px"></div>' +
+    fs +
+    '<label class="fl">理由（写给报告，不进 Word）<textarea class="txt" data-f="why" rows="2">' + esc(d.why||"") + '</textarea></label>' +
+    '<div class="acts"><button class="btn tiny" data-act="save">保存并重新定位</button>' +
+    '<button class="btn quiet tiny" data-act="cancel">取消</button>' +
+    '<span class="hint">换类型只改这一条：修订降为批注就选「批注」，锚点已自动填上原文。</span></div></div>';
+}
+
+function prevHTML(p){
+  const t = p.text, s = p.s, e = p.e;
+  if (p.mode === "note")
+    return '<div class="prev"><span class="cap">批注挂在这里</span>' + esc(t.slice(0,s)) +
+      (e > s ? '<span class="noteb">' + esc(t.slice(s,e)) + '</span>' : "") + esc(t.slice(e)) +
+      '<br><span class="cap" style="margin-top:8px">批注文字</span>' + esc(p.dst) + '</div>';
+  if (p.mode === "insert")
+    return '<div class="prev"><span class="cap">插在这一段之后</span>' + esc(t) +
+      '<br><span class="new">' + esc(p.dst).replace(/\n/g,"<br>") + '</span></div>';
+  if (p.mode === "delpara")
+    return '<div class="prev"><span class="cap">整段删除</span><span class="old">' + esc(t) + '</span></div>';
+  if (p.mode === "insert_after")
+    return '<div class="prev"><span class="cap">改动预览</span>' + esc(t.slice(0,e)) +
+      '<span class="new">' + esc(p.dst) + '</span>' + esc(t.slice(e)) + '</div>';
+  return '<div class="prev"><span class="cap">改动预览</span>' + esc(t.slice(0,s)) +
+    '<span class="old">' + esc(t.slice(s,e)) + '</span>' +
+    (p.dst ? '<span class="new">' + esc(p.dst) + '</span>' : "") + esc(t.slice(e)) + '</div>';
+}
+
+function grab(row){ row.querySelectorAll("[data-f]").forEach(el => DRAFT[el.dataset.f] = el.value); }
+function startEdit(it, kind){
+  DRAFT = Object.assign({}, it.item || {});
+  DRAFT.kind = kind || (it.item && it.item.kind) || it.kind;
+  if (kind === "note"){
+    if (!DRAFT.anchor) DRAFT.anchor = DRAFT.src || "";
+    if (!DRAFT.note) DRAFT.note = "";
+  }
+  EDIT = it.uid; ST.open.add(it.uid); renderList();
+}
+function apply(j){
+  if (!j || !j.items) return;
+  ST.items = j.items; ST.stats = j.stats; renderList(); syncFoot();
+  if (j.warn) toast(j.warn);
+}
+
+/* 一个委托监听管全部行 —— 重画不掉事件，条目序号重复也不串行 */
+$("#rows").addEventListener("click", async ev => {
+  const row = ev.target.closest(".row"); if (!row) return;
+  const uid = row.dataset.uid;
+  const it = ST.items.find(x => x.uid === uid); if (!it) return;
+  const btn = ev.target.closest("[data-act]");
+  if (!btn){
+    if (ev.target.closest(".rowhead")){
+      if (EDIT === uid) return;
+      ST.open.has(uid) ? ST.open.delete(uid) : ST.open.add(uid);
+      renderList();
+    }
+    return;
+  }
+  ev.stopPropagation();
+  const act = btn.dataset.act;
+  if (act === "cand"){
+    const c = it.cands[+btn.dataset.i];
+    apply(await api("/api/force", {uid, para:c.para, start:c.start, end:c.end}));
+    toast("已按你指认的位置重算。");
+  } else if (act === "para"){
+    apply(await api("/api/force", {uid, para:+btn.dataset.para, start:0, end:0}));
+  } else if (act === "skip"){
+    apply(await api("/api/skip", {uid, on:!it.skip}));
+  } else if (act === "edit"){
+    startEdit(it);
+  } else if (act === "tonote"){
+    startEdit(it, "note");
+  } else if (act === "cancel"){
+    EDIT = null; renderList();
+  } else if (act === "save"){
+    grab(row);
+    const body = {uid, kind:DRAFT.kind};
+    ["loc","occ","why","src","dst","anchor","body","note"].forEach(k => body[k] = DRAFT[k] || "");
+    const j = await api("/api/edit", body);
+    if (j && j.items){ EDIT = null; apply(j); toast("已改并重新定位。"); }
+  } else if (act === "search"){
+    const q = (row.querySelector("[data-q]") || {}).value || "";
+    const j = await api("/api/paras", {q: q.trim()});
+    HITS[uid] = {q: q.trim(), paras: j.paras || []};
+    renderList();
+  }
+});
+$("#rows").addEventListener("change", ev => {
+  const sel = ev.target.closest("[data-kind]"); if (!sel) return;
+  const row = ev.target.closest(".row");
+  grab(row);
+  DRAFT.kind = sel.value;
+  if (DRAFT.kind === "note" && !DRAFT.anchor) DRAFT.anchor = DRAFT.src || "";
+  if (DRAFT.kind !== "note" && !DRAFT.src) DRAFT.src = DRAFT.anchor || "";
+  renderList();
+});
+$("#export").onclick = async () => {
+  const j = await api("/api/export", {});
+  if (!j.text) return;
+  $("#ai").value = j.text;
+  try { await navigator.clipboard.writeText(j.text); toast("已把改过的落盘块写回上面的框，并复制到剪贴板。"); }
+  catch { toast("已把改过的落盘块写回上面的框。"); }
+};
+$("#onlybad").onchange = renderList;
+
+/* ── 跑 ── */
+function cfg(dry){ return {dry, name:$("#oname").value, author:$("#author").value,
+  initials:$("#initials").value, start:$("#t1").value, end:$("#t2").value,
+  windows:$("#windows").value, weekend:$("#weekend").checked, outdir:$("#odir").value}; }
+$("#dry").onclick = () => start(true);
+$("#go").onclick  = () => start(false);
+async function start(dry){
+  const j = await api("/api/run", cfg(dry));
+  if (!j.ok) return;
+  ST.running = true; syncFoot(); goTab("log");
+  $("#result").innerHTML = ""; $("#log").textContent = "";
+  $("#logstate").innerHTML = '<span class="spin"></span> ' + (dry ? "试跑中…" : "落盘中…");
+  poll(0, dry);
+}
+async function poll(since, dry){
+  const r = await fetch("/api/log?since=" + since);
+  const j = await r.json();
+  if (j.lines.length){
+    const pre = $("#log");
+    pre.insertAdjacentHTML("beforeend", j.lines.map(l =>
+      l.includes("[PASS]") ? "<b>"+esc(l)+"</b>" :
+      (l.includes("[FAIL]")||l.includes("【停下了】")) ? "<u>"+esc(l)+"</u>" : esc(l)).join("\n") + "\n");
+    pre.scrollTop = pre.scrollHeight;
+  }
+  if (j.running){ setTimeout(() => poll(j.n, dry), 450); return; }
+  ST.running = false; syncFoot();
+  if (j.ok && dry){
+    $("#logstate").textContent = "试跑通过。";
+    $("#result").innerHTML = '<div class="deliver">清单能全部锚定，可以正式落盘了。</div>';
+  } else if (j.ok){
+    $("#logstate").textContent = "体检全过，已交付。";
+    $("#result").innerHTML = '<div class="deliver">交付文件：' + esc(j.deliver) + '</div>';
+    $("#reveal").disabled = false; $("#reveal").dataset.path = j.deliver;
+    toast("落盘完成。");
+  } else {
+    $("#logstate").textContent = "没跑完。";
+    $("#result").innerHTML = '<div class="err">这一趟没有出文件——原因见日志最后几行。来件本身一个字没动。</div>';
+  }
+}
+$("#reveal").onclick = () => api("/api/reveal", {path: $("#reveal").dataset.path});
+$("#quit").onclick = async () => { await api("/api/quit"); document.body.innerHTML =
+  '<div class="wrap"><p style="padding:60px 0;color:var(--muted)">落盘台已退出，可以关掉这个页面了。</p></div>'; };
+
+/* ── 底栏 ── */
+function syncFoot(){
+  const s = ST.stats || {};
+  const usable = (s.ok||0) + (s.check||0);
+  const ready = !!ST.file && usable > 0 && !ST.running;
+  $("#dry").disabled = !ready; $("#go").disabled = !ready;
+  $("#footnote").textContent = !ST.file ? "先选来件，再粘落盘块。"
+    : !ST.items.length ? "来件已就绪。把落盘块粘进来，点「解析并定位」。"
+    : ST.running ? "正在跑，别关窗口。"
+    : (s.ask||0) + (s.miss||0) + (s.bad||0) > 0
+      ? "有 " + ((s.ask||0)+(s.miss||0)+(s.bad||0)) + " 条没落实——处理掉，或让它们跳过；其余可以先落盘。"
+      : "清单全部命中，可以落盘。";
+}
+fetch("/api/state").then(r=>r.json()).then(j => {
+  if (!j.soffice) $("#fileinfo").insertAdjacentHTML("beforeend",
+    '<p class="hint">本机没找到 LibreOffice：.docx 不受影响，.doc 来件转不了。</p>');
+  // 署名、缩写、工作时段一律以 配置.json 为准，页面不自带任何人的默认值
+  const c = j.cfg || {};
+  if (c.author)   $("#author").value   = c.author;
+  if (c.initials) $("#initials").value = c.initials;
+  if (c.windows)  $("#windows").value  = c.windows;
+  if (c.weekend)  $("#weekend").checked = true;
+  if (c.author === "审查人") $("#author").insertAdjacentHTML("afterend",
+    '<p class="hint" style="color:#b45309">署名还是占位值「审查人」——先去改工具包根目录的 配置.json。</p>');
+});
+syncFoot();
+</script>
+</body>
+</html>
